@@ -70,6 +70,9 @@ const Publication = (props: any) => {
                 console.log(image)
                 setImgSrc(`data:${image.image.type};base64,${Buffer.from(image.imageData.data).toString('base64')}`);
             });
+        } else if (props.pub.urlImg !== null) {
+            setImgSrc(props.pub.urlImg);
+
         } else {
             setImgSrc(defaultImage);
         }
@@ -82,8 +85,8 @@ const Publication = (props: any) => {
     return (<Col id='col-m-tb' xl={3} sm={6} xs={12} >
         <Link to={id}>
             <div className='textIm'>
-                {props.pub.userId} <br />
-                    Photo {props.pub.id}
+                User {props.pub.userId} <br />
+                {props.pub.title}
             </div>
             <span className='helper'></span><img className='thumb' src={imgSrc} alt={props.pub.image} height='auto' width='100%' />
         </Link>

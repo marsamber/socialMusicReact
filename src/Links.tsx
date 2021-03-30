@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUpload, faSignOutAlt, faSignInAlt } from '@fortawesome/free-solid-svg-icons';
-import { Button, Form, FormControl, Modal, Nav, Navbar } from 'react-bootstrap';
+import { Button, Form, FormControl, Modal, Nav, Navbar, Alert } from 'react-bootstrap';
 import React, { useState } from 'react'
 // import Login from './Login';
 import auth from './auth';
@@ -31,6 +31,11 @@ const Links = () => {
     const [passwordReg, setPasswordReg] = useState<string | null>(null);
     const [check, setCheck] = useState(false);
 
+    const [showErrorsLogin, setShowErrorsLogin] = useState(false);
+    const [errorsLogin, setErrorsLogin] = useState<string | null>(null);
+
+    const [showErrorsReg, setShowErrorsReg] = useState(false);
+    const [errorsReg, setErrorsReg] = useState<string | null>(null);
 
     const validateForm = () => {
         let login_data = {
@@ -50,9 +55,9 @@ const Links = () => {
                 auth.saveToken(resp);
                 window.location.href = '/';
             }
-
             else {
-                console.log(resp.message);
+                setShowErrorsLogin(true);
+                setErrorsLogin(resp.message);
             }
         });
 
@@ -68,19 +73,27 @@ const Links = () => {
             public: !check
         }
 
-        fetch('http://localhost:8081/api/auth/signup', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(reg_data)
-        }).then(async (res) => {
-            let resp = await res.json();
-            console.log(resp.message);
-            if (res.status === 200) {
-                window.location.href = '/';
-            }
-        });
+        if (usernameReg === null || emailReg === null || firstnameReg === null || passwordReg === null) {
+            setShowErrorsReg(true);
+            setErrorsReg('You must fill all the fields marked as required!');
+        }
+        else {
+            fetch('http://localhost:8081/api/auth/signup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(reg_data)
+            }).then(async (res) => {
+                if (res.status === 200) {
+                    window.location.href = '/';
+                }
+                else {
+                    setShowErrorsReg(true);
+                    setErrorsReg(res.statusText);
+                }
+            });
+        }
 
     }
 
@@ -152,6 +165,11 @@ const Links = () => {
                                 <Form.Label>Password</Form.Label>
                                 <Form.Control type="password" placeholder="Password" onChange={(e) => setPassword(e.target.value)} />
                             </Form.Group>
+
+                            {showErrorsLogin ? <Alert variant='danger'>
+                                {errorsLogin}
+                            </Alert> : undefined}
+
                         </Modal.Body>
                         <Modal.Footer className='justify-content-center'>
                             <Button id='btn-out'
@@ -208,8 +226,13 @@ const Links = () => {
                                 <Form.Check type="checkbox" label="I want a private profile" onChange={(e) => setCheck(e.target.checked)} />
                             </Form.Group>
                             <Form.Text id="passwordHelpBlock" muted>
-                                * You must fill out all required properties before checking in this document
+                                * You must fill out all required fields before checking
                             </Form.Text>
+
+                            {showErrorsReg ? <Alert variant='danger'>
+                                {errorsReg}
+                            </Alert> : undefined}
+
                         </Modal.Body>
                         <Modal.Footer className='justify-content-center'>
                             <Button id='btn-in'
