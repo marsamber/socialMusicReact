@@ -71,3 +71,21 @@ body {
   height: 100%;
   vertical-align: middle;
 }
+
+.container {
+  padding: 15px;
+  margin: auto;
+}
+
+audio {
+  width: 100%;
+}
+
+video {
+  width: 100%;
+}
+
+.btn-pub {
+  width: 30%;
+  height: auto;
+}

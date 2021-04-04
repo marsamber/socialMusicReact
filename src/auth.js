@@ -43,10 +43,10 @@ const isLogged = () => {
 };
 
 const auth = {
-  saveToken: saveToken,
-  getToken: getToken,
-  logout: logout,
-  isLogged: isLogged,
+  saveToken,
+  getToken,
+  logout,
+  isLogged,
 };
 
 export default auth;

@@ -1,5 +1,6 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUpload, faSignOutAlt, faSignInAlt } from '@fortawesome/free-solid-svg-icons';
+import { faSpotify } from '@fortawesome/free-brands-svg-icons'
 import { Button, Form, FormControl, Modal, Nav, Navbar, Alert } from 'react-bootstrap';
 import React, { useState } from 'react'
 // import Login from './Login';
@@ -89,12 +90,21 @@ const Links = () => {
                     window.location.href = '/';
                 }
                 else {
+                    let resp = await res.json();
                     setShowErrorsReg(true);
-                    setErrorsReg(res.statusText);
+                    console.log(res);
+                    setErrorsReg(resp.message);
                 }
             });
         }
 
+    }
+
+    const loginSpotify = () => {
+        window.location.href = 'http://localhost:8081/api/spotify/login';
+        // fetch('http://localhost:8081/api/spotify/login', {
+        //     mode: 'no-cors'
+        // }).then((res) => console.log(res));
     }
 
     if (auth.isLogged())
@@ -181,6 +191,7 @@ const Links = () => {
                             <Button id='btn-in' onClick={handleShowRegister}>
                                 Create Account
                 </Button>
+                            <a onClick={() => loginSpotify()} className="btn btn-success"> <FontAwesomeIcon icon={faSpotify} /> Log in with Spotify</a>
                         </Modal.Footer>
                     </Form>
                 </Modal>

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
 import Links from './Links';
 import Home from './Home';
@@ -6,7 +6,7 @@ import Profile from './Profile';
 import Messages from './Messages';
 import Explore from './Explore';
 import Upload from './Upload';
-import Photo from './Photo'
+import Publication from './Publication'
 import Error from './Error';
 
 const Navbar = () => {
@@ -33,7 +33,7 @@ const Navbar = () => {
                     <Upload />
                 </Route>
                 <Route path='/:id'>
-                    <Photo />
+                    <Publication />
                 </Route>
                 <Route path='*'>
                     <Error />

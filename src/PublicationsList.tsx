@@ -5,13 +5,18 @@ import defaultImage from './default.png';
 import auth from './auth';
 
 
-const PublicationsList = () => {
+const PublicationsList = (props: any) => {
     const [data, setData] = useState<any[]>([]);
 
     const getPublications = async () => {
+        let url = 'http://localhost:8081/api/publications';
+        if (props.url) {
+            url = props.url;
+        }
+        console.log(url);
         let token = localStorage.getItem('token');
         if (token !== null) {
-            const resp = await fetch('http://localhost:8081/api/publications', {
+            const resp = await fetch(url, {
                 headers: {
                     'Content-Type': 'application/json',
                     'x-access-token': token
@@ -38,8 +43,8 @@ const PublicationsList = () => {
         numRow = Math.round(numRow) + 1;
         let i = -1;
         return <>
-            {[...Array(numRow)].map((el) => {
-                return <Row className='row-m-t'>
+            {[...Array(numRow)].map((el, index) => {
+                return <Row className='row-m-t' key={index}>
                     {[...Array(4)].map((el) => {
                         i++;
                         if (i < data.length)
@@ -50,7 +55,7 @@ const PublicationsList = () => {
         </>
 
     } else {
-        return <></>
+        return <><h1 className='text-center'>We don't have any posts to show you!</h1></>
     }
 }
 
@@ -86,7 +91,7 @@ const Publication = (props: any) => {
         <Link to={id}>
             <div className='textIm'>
                 User {props.pub.userId} <br />
-                {props.pub.title}
+                {props.pub.title} {props.pub.id}
             </div>
             <span className='helper'></span><img className='thumb' src={imgSrc} alt={props.pub.image} height='auto' width='100%' />
         </Link>
