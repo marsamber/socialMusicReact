@@ -47,7 +47,6 @@ body {
 .textIm {
   margin: auto;
   color: #fff;
-  text-align: center;
   background: #000;
   transition: opacity 0.4s linear;
   cursor: pointer;
@@ -87,5 +86,16 @@ video {
 
 .btn-pub {
   width: 30%;
-  height: auto;
+}
+
+.add-space {
+  margin: 8px;
+}
+
+.justify {
+  text-align: justify;
+}
+
+.comments-zone {
+  height: 40vh;
 }
