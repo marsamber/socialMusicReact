@@ -18,6 +18,8 @@ const Publication = () => {
     const [videoSrc, setvideoSrc] = useState('');
     const [imgSrc, setImgSrc] = useState('');
     const [user, setUser] = useState('');
+    const [showComments, setShowComments] = useState(false);
+
 
     const loadImage = (publication: any) => {
         if (publication.image !== null) {
@@ -105,15 +107,19 @@ const Publication = () => {
                 }
             }).then(async (res) => {
                 if (res.status === 200) {
-                    res.json().then((publication) => {
-                        setPublication(publication);
-                        loadImage(publication);
-                        loadUser(publication);
-                        loadAudio(publication);
-                        loadVideo(publication);
-                    })
+                    console.log("hola" + res);
+                    if (res.json.length != 0)
+                        res.json().then((publication) => {
+                            setPublication(publication);
+                            loadImage(publication);
+                            loadUser(publication);
+                            loadAudio(publication);
+                            loadVideo(publication);
+                        })
+                    else
+                        window.location.href = '/errorPage';
                 } else {
-                    console.log(res.statusText);
+                    console.log("holadsds" + res);
                 }
             })
         }
@@ -136,31 +142,113 @@ const Publication = () => {
             </Row>
             <hr />
             <Row>
-                <Col md={{ span: 6 }}>
-                    <h2>{user}</h2>
-                    <p>{publication.description}</p>
-                </Col>
-                <Col md={{ span: 4, offset: 1 }}>
+                <Col md={{ span: 3 }}>
                     <Row>
                         {imgSrc === '' || audioSrc === '' ? undefined : <img className='thumb' src={imgSrc} alt='thumbnail' height='auto' width='100%' />}
 
                     </Row>
                     <Row>
-                        {audioSrc === '' ? undefined : <audio controls autoPlay loop src={audioSrc} />}
-                        {videoSrc === '' ? undefined : <video controls autoPlay loop src={videoSrc} />}
+                        {audioSrc === '' ? undefined : <audio controls loop src={audioSrc} />}
+                        {videoSrc === '' ? undefined : <video controls loop src={videoSrc} />}
                         {/* {videoSrc === '' ? undefined : <iframe allowFullScreen src="" />} el src tiene que ser https://www.youtube.com/embed/mm7s6NoRtNg asi, crear check para decidir si es de yt el video y entonces decir como se tiene q hacer */}
                     </Row>
+                    <br />
+                    <Row>
+                        <Col className='text-center'>
+                            <button className='btn btn-pub' id='btn-in' onClick={() => setShowComments(!showComments)}><FontAwesomeIcon icon={faComments}></FontAwesomeIcon></button>
+                            <button className='btn btn-pub' id='btn-in'><FontAwesomeIcon icon={faHeart}></FontAwesomeIcon></button>
+                            <button className='btn btn-pub' id='btn-in'><FontAwesomeIcon icon={faShare}></FontAwesomeIcon></button>
+                        </Col>
+                    </Row>
                 </Col>
-            </Row>
-            <br />
-            <Row>
-                <Col md={{ span: 6, offset: 6 }} className='text-center'>
-                    <button className='btn btn-pub' id='btn-in'><FontAwesomeIcon icon={faComments}></FontAwesomeIcon></button>
-                    <button className='btn btn-pub' id='btn-in'><FontAwesomeIcon icon={faHeart}></FontAwesomeIcon></button>
-                    <button className='btn btn-pub' id='btn-in'><FontAwesomeIcon icon={faShare}></FontAwesomeIcon></button>
+                <Col md={{ span: 8, offset: 1 }}>
+                    <Row>
+                        <Col>
+                            <h2>{user}</h2>
+                            <p>{publication.description}</p>
+                        </Col>
+                    </Row>
+                    <br />
+                    {!showComments ? undefined :
+                        <Row>
+                            <Col>
+                                <Row>
+                                    <Col>
+                                        <h3>Comments</h3>
+                                    </Col>
+                                </Row>
+                                <Row className='overflow-auto comments-zone'>
+                                    <Col>
+                                        <Row>
+                                            <Col>
+                                                <Row>
+                                                    <Col>
+                                                        <h5>User 1</h5>
+                                                    </Col>
+                                                </Row>
+                                                <Row>
+                                                    <Col className='justify'>
+                                                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vitae facilisis enim, quis lobortis neque. Maecenas vitae gravida lorem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur ligula eget feugiat consequat. Proin hendrerit pellentesque scelerisque. Curabitur sed vulputate erat. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>
+                                                    </Col>
+                                                </Row>
+                                            </Col>
+                                        </Row>
+                                        <Row>
+                                            <Col>
+                                                <Row>
+                                                    <Col>
+                                                        <h5>User 2</h5>
+                                                    </Col>
+                                                </Row>
+                                                <Row>
+                                                    <Col className='justify'>
+                                                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vitae facilisis enim, quis lobortis neque. Maecenas vitae gravida lorem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur ligula eget feugiat consequat. Proin hendrerit pellentesque scelerisque. Curabitur sed vulputate erat. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>
+                                                    </Col>
+                                                </Row>
+                                            </Col>
+                                        </Row>
+                                        <Row>
+                                            <Col>
+                                                <Row>
+                                                    <Col>
+                                                        <h5>User 3</h5>
+                                                    </Col>
+                                                </Row>
+                                                <Row>
+                                                    <Col className='justify'>
+                                                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vitae facilisis enim, quis lobortis neque. Maecenas vitae gravida lorem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur ligula eget feugiat consequat. Proin hendrerit pellentesque scelerisque. Curabitur sed vulputate erat. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>
+                                                    </Col>
+                                                </Row>
+                                            </Col>
+                                        </Row>
+                                        <Row>
+                                            <Col>
+                                                <Row>
+                                                    <Col>
+                                                        <h5>User 4</h5>
+                                                    </Col>
+                                                </Row>
+                                                <Row>
+                                                    <Col className='justify'>
+                                                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vitae facilisis enim, quis lobortis neque. Maecenas vitae gravida lorem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer consectetur ligula eget feugiat consequat. Proin hendrerit pellentesque scelerisque. Curabitur sed vulputate erat. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.</p>
+                                                    </Col>
+                                                </Row>
+                                            </Col>
+                                        </Row>
+                                    </Col>
+                                </Row>
+
+                            </Col>
+
+                        </Row>
+                    }
+
+
                 </Col>
+
             </Row>
-        </div>
+
+        </div >
     )
 }
 
