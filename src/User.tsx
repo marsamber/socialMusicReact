@@ -36,12 +36,13 @@ const User = () => {
                         setLastname(resp.lastname === null ? '' : ' ' + resp.lastname);
                         setBiography(resp.biography === null ? '' : resp.biography);
                         setUserPublic(resp.public);
-                        console.log(userId);
+                        if (!resp.public) window.location.href = '/';
                     });
                 } else {
                     console.log(res.statusText);
+                    window.location.href = '/error';
                 }
-            })
+            });
         }
     }
 
@@ -59,13 +60,14 @@ const User = () => {
                     <div className='float-right'>
                         <h2>{username}</h2>
                         <h3>{firstname + lastname}</h3>
-                        <h5>{biography}</h5>
+                        <h5>{biography}ddkfguklgtlci68yi5cthi757iu</h5>
+                        <button className='btn' id='btn-in'>Follow</button>
                     </div>
                 </Col>
-            </Row>
+            </Row >
             <br />
             <br />
-            {userId !== null ? <Row><PublicationsList url={`http://localhost:8081/api/publications/users/${userId}`} /></Row> : undefined}
+            { userId !== null ? <Row><PublicationsList url={`http://localhost:8081/api/publications/users/${userId}`} /></Row> : undefined}
         </div >
     )
 }

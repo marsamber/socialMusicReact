@@ -30,14 +30,14 @@ const Navbar = () => {
                 <Route path='/upload'>
                     <Upload />
                 </Route>
+                <Route path='/error'>
+                    <Error />
+                </Route>
                 <Route path='/user/:id'>
                     <User />
                 </Route>
                 <Route path='/:id'>
                     <Publication />
-                </Route>
-                <Route path='*'>
-                    <Error />
                 </Route>
             </Switch>
         </Router>

@@ -13,7 +13,7 @@ const Profile = () => {
     let token = localStorage.getItem('token');
 
     const [username, setUsername] = useState('');
-    const [userPublic, setUserPublic] = useState(null);
+    const [userPublic, setUserPublic] = useState<boolean | null>(null);
     const [firstname, setFirstname] = useState('');
     const [lastname, setLastname] = useState('');
     const [biography, setBiography] = useState('')
@@ -53,6 +53,28 @@ const Profile = () => {
     const config = () => {
         setShowConfig(!showConfig);
         setShowPublications(!showPublications);
+    }
+
+    const changePublic = () => {
+        if (token !== null) {
+            fetch('http://localhost:8081/api/users', {
+                method: 'PUT',
+                body: JSON.stringify({ public: !userPublic }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-token': token
+                }
+            }).then(async (res) => {
+                if (res.status === 200) {
+                    if (userPublic !== null)
+                        setUserPublic(!userPublic);
+                } else {
+                    let resp = await res.json();
+                    console.log(resp.message);
+                    console.log(res.statusText);
+                }
+            });
+        }
     }
 
     const deleteAccount = () => {
@@ -102,7 +124,7 @@ const Profile = () => {
             {showPublications ? <Row><PublicationsList url={`http://localhost:8081/api/publications/users/${userId}`} /></Row> : undefined}
             {showConfig ? <div>
                 <Row>
-                    <Col className='text-center'><h4 >Public Profile <button className='btn'>{userPublic ? <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon> : <FontAwesomeIcon icon={faTimes}></FontAwesomeIcon>}</button></h4></Col>
+                    <Col className='text-center'><h4 >Public Profile <button className='btn' onClick={() => changePublic()}>{userPublic ? <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon> : <FontAwesomeIcon icon={faTimes}></FontAwesomeIcon>}</button></h4></Col>
                 </Row>
                 <Row>
                     <Col className='text-center'><h4>Delete Account <button className='btn' onClick={() => deleteAccount()}><FontAwesomeIcon icon={faTrash}></FontAwesomeIcon></button></h4></Col>

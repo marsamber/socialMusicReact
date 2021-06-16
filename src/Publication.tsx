@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { Col, Row } from 'react-bootstrap';
+import { Col, Row, InputGroup, FormControl, Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faHeart, faComments, faShare } from '@fortawesome/free-solid-svg-icons';
 import auth from './auth';
 import defaultImage from './default.png';
+import Error from './Error';
 
 const Publication = () => {
 
@@ -115,6 +116,7 @@ const Publication = () => {
                     })
                 } else {
                     console.log(res.statusText);
+                    window.location.href = "/error";
                 }
             })
         }
@@ -146,27 +148,7 @@ const Publication = () => {
 
 
                     </Row>
-                    <Row>
-                        <Col>{comments ?
-                            <div style={{ overflowY: 'scroll', height: '50vh' }}>
-                                <h2>
-                                    Comments
-                            </h2>
-                                <div>
-                                    <h3>User 1</h3>
-                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus congue nibh eu molestie maximus. Pellentesque lobortis sem non leo placerat condimentum. Sed pretium nisl et ipsum gravida, sed elementum metus finibus.</p>
-                                </div>
-                                <div>
-                                    <h3>User 2</h3>
-                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus congue nibh eu molestie maximus. Pellentesque lobortis sem non leo placerat condimentum. Sed pretium nisl et ipsum gravida, sed elementum metus finibus.</p>
-                                </div>
-                                <div>
-                                    <h3>User 3</h3>
-                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus congue nibh eu molestie maximus. Pellentesque lobortis sem non leo placerat condimentum. Sed pretium nisl et ipsum gravida, sed elementum metus finibus.</p>
-                                </div>
-                            </div>
-                            : undefined}</Col>
-                    </Row>
+
                 </Col>
                 <Col md={{ span: 4, offset: 1 }}>
                     <Row>
@@ -187,6 +169,34 @@ const Publication = () => {
                         </Col>
                     </Row>
                 </Col>
+            </Row>
+            <Row>
+                <Col>{comments ? <><h2>
+                    Comments
+                            </h2>
+                    <div style={{ overflowY: 'scroll', height: '40vh' }}>
+
+                        <div>
+                            <h3>User 1</h3>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus congue nibh eu molestie maximus. Pellentesque lobortis sem non leo placerat condimentum. Sed pretium nisl et ipsum gravida, sed elementum metus finibus.</p>
+                        </div>
+                        <div>
+                            <h3>User 2</h3>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus congue nibh eu molestie maximus. Pellentesque lobortis sem non leo placerat condimentum. Sed pretium nisl et ipsum gravida, sed elementum metus finibus.</p>
+                        </div>
+                        <div>
+                            <h3>User 3</h3>
+                            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus congue nibh eu molestie maximus. Pellentesque lobortis sem non leo placerat condimentum. Sed pretium nisl et ipsum gravida, sed elementum metus finibus.</p>
+                        </div>
+                    </div>
+                    <br />
+                    <InputGroup>
+                        <FormControl as="textarea" aria-label="With textarea" />
+                        <button className='btn' id='btn-in'>Send comment</button>
+
+                    </InputGroup>
+                </>
+                    : undefined}</Col>
             </Row>
 
         </div >
