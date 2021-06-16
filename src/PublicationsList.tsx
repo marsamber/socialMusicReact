@@ -89,10 +89,10 @@ const Publication = (props: any) => {
 
     return (<Col id='col-m-tb' xl={3} sm={6} xs={12} >
         <Link to={id}>
-            <div className='textIm'>
+            <a href={`/user/${props.pub.userId}`} className='textIm'>
                 User {props.pub.userId} <br />
                 {props.pub.title} {props.pub.id}
-            </div>
+            </a>
             <span className='helper'></span><img className='thumb' src={imgSrc} alt={props.pub.image} height='auto' width='100%' />
         </Link>
     </Col>

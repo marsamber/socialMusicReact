@@ -18,6 +18,7 @@ const Publication = () => {
     const [videoSrc, setvideoSrc] = useState('');
     const [imgSrc, setImgSrc] = useState('');
     const [user, setUser] = useState('');
+    const [comments, setComments] = useState(false);
 
     const loadImage = (publication: any) => {
         if (publication.image !== null) {
@@ -137,8 +138,35 @@ const Publication = () => {
             <hr />
             <Row>
                 <Col md={{ span: 6 }}>
-                    <h2>{user}</h2>
-                    <p>{publication.description}</p>
+                    <Row>
+                        <Col>
+                            <h2>{user}</h2>
+                            <p>{publication.description}</p>
+                        </Col>
+
+
+                    </Row>
+                    <Row>
+                        <Col>{comments ?
+                            <div style={{ overflowY: 'scroll', height: '50vh' }}>
+                                <h2>
+                                    Comments
+                            </h2>
+                                <div>
+                                    <h3>User 1</h3>
+                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus congue nibh eu molestie maximus. Pellentesque lobortis sem non leo placerat condimentum. Sed pretium nisl et ipsum gravida, sed elementum metus finibus.</p>
+                                </div>
+                                <div>
+                                    <h3>User 2</h3>
+                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus congue nibh eu molestie maximus. Pellentesque lobortis sem non leo placerat condimentum. Sed pretium nisl et ipsum gravida, sed elementum metus finibus.</p>
+                                </div>
+                                <div>
+                                    <h3>User 3</h3>
+                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus congue nibh eu molestie maximus. Pellentesque lobortis sem non leo placerat condimentum. Sed pretium nisl et ipsum gravida, sed elementum metus finibus.</p>
+                                </div>
+                            </div>
+                            : undefined}</Col>
+                    </Row>
                 </Col>
                 <Col md={{ span: 4, offset: 1 }}>
                     <Row>
@@ -150,17 +178,18 @@ const Publication = () => {
                         {videoSrc === '' ? undefined : <video controls autoPlay loop src={videoSrc} />}
                         {/* {videoSrc === '' ? undefined : <iframe allowFullScreen src="" />} el src tiene que ser https://www.youtube.com/embed/mm7s6NoRtNg asi, crear check para decidir si es de yt el video y entonces decir como se tiene q hacer */}
                     </Row>
+                    <br />
+                    <Row>
+                        <Col className='text-center' style={{ paddingLeft: 0, paddingRight: 0 }}>
+                            <button className='btn btn-pub' id='btn-in' onClick={() => setComments(!comments)}><FontAwesomeIcon icon={faComments}></FontAwesomeIcon></button>
+                            <button className='btn btn-pub' id='btn-in'><FontAwesomeIcon icon={faHeart}></FontAwesomeIcon></button>
+                            <button className='btn btn-pub' id='btn-in'><FontAwesomeIcon icon={faShare}></FontAwesomeIcon></button>
+                        </Col>
+                    </Row>
                 </Col>
             </Row>
-            <br />
-            <Row>
-                <Col md={{ span: 6, offset: 6 }} className='text-center'>
-                    <button className='btn btn-pub' id='btn-in'><FontAwesomeIcon icon={faComments}></FontAwesomeIcon></button>
-                    <button className='btn btn-pub' id='btn-in'><FontAwesomeIcon icon={faHeart}></FontAwesomeIcon></button>
-                    <button className='btn btn-pub' id='btn-in'><FontAwesomeIcon icon={faShare}></FontAwesomeIcon></button>
-                </Col>
-            </Row>
-        </div>
+
+        </div >
     )
 }
 

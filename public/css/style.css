@@ -64,6 +64,8 @@ body {
 
 .textIm:hover {
   opacity: 0.75;
+  color: white;
+  text-decoration: none;
 }
 
 .helper {

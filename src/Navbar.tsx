@@ -8,6 +8,7 @@ import Explore from './Explore';
 import Upload from './Upload';
 import Publication from './Publication'
 import Error from './Error';
+import User from './User';
 
 const Navbar = () => {
     return (
@@ -23,14 +24,14 @@ const Navbar = () => {
                 <Route path='/messages'>
                     <Messages />
                 </Route>
-                <Route path='/messages'>
-                    <Messages />
-                </Route>
                 <Route path='/explore'>
                     <Explore />
                 </Route>
                 <Route path='/upload'>
                     <Upload />
+                </Route>
+                <Route path='/user/:id'>
+                    <User />
                 </Route>
                 <Route path='/:id'>
                     <Publication />
