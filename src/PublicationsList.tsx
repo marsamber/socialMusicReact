@@ -88,14 +88,20 @@ const Publication = (props: any) => {
     }, []);
 
     return (<Col id='col-m-tb' xl={3} sm={6} xs={12} >
+
         <Link to={id}>
-            <a href={`/user/${props.pub.userId}`} className='textIm text-center'>
-                User {props.pub.userId} <br />
-                {props.pub.title}
-            </a>
-            <span className='helper'></span><img className='thumb' src={imgSrc} alt={props.pub.image} height='auto' width='100%' />
+            <div className='textIm'>
+                <a href={`/user/${props.pub.userId}`} onClick={(e) => e.stopPropagation()} style={{
+                    color: 'white',
+                    textDecoration: 'none'
+                }} className=' text-center'>
+                    User {props.pub.userId} <br />
+                    {props.pub.title}
+                </a>
+            </div>
         </Link>
-    </Col>
+        <span className='helper'></span><img className='thumb' src={imgSrc} alt={props.pub.image} height='auto' width='100%' />
+    </Col >
     )
 }
 

@@ -3,6 +3,7 @@ import { Alert, Col, Form, Row } from 'react-bootstrap';
 import bsCustomFileInput from 'bs-custom-file-input';
 import auth from './auth';
 import { listenerCount } from 'node:cluster';
+import { createTaggedTemplate } from 'typescript';
 
 
 // NO FUNCIONA
@@ -15,6 +16,7 @@ const Upload = () => {
         title: null,
         singer: null,
         description: null,
+        tags: null,
         urlFile: null,
         urlImg: null,
         file: null,
@@ -28,8 +30,10 @@ const Upload = () => {
 
     const uploadFile = (e: React.ChangeEvent<HTMLInputElement>): void => {
         if (e.target.files !== null) {
-            setPost({ ...post, file: e.target.files[0] })
+            setPost({ ...post, file: e.target.files[0] });
+            console.log(e.target.files[0]);
         }
+
     }
     const uploadCover = (e: React.ChangeEvent<HTMLInputElement>): void => {
         if (e.target.files !== null) {
@@ -47,285 +51,1104 @@ const Upload = () => {
                 urlAudio: null,
                 urlVideo: null
             }
-            if (post.isAudio) {
-                if (post.file !== null) {
-                    fetch('http://localhost:8081/api/audios', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-access-token': token
-                        },
-                        body: JSON.stringify(post.file)
-                    }).then((res) => {
-                        res.json().then((audio) => {
-                            const audioId = audio.id;
-                            if (post.image !== null) {
-                                fetch('http://localhost:8081/api/images', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'x-access-token': token
-                                    },
-                                    body: JSON.stringify(post.image)
-                                }).then((res) => {
-                                    res.json().then((image) => {
-                                        const imageId = image.id;
-                                        fetch(`http://localhost:8081/api/publications/${imageId}/${audioId}/0`, {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'x-access-token': token
-                                            },
-                                            body: JSON.stringify(newPost)
-                                        }).then((res) => {
-                                            if (res.status === 200) {
-                                                window.location.href = '/profile';
-                                            } else {
-                                                console.log(res.statusText);
-                                            }
+            console.log(post.isAudio);
+            console.log(post.image);
+            if (newPost.title === null || newPost.singer === null) {
+                setShowErrors(true);
+                setErrors('You must fill the title, the singer and select a file!');
+            } else {
+                if (post.isAudio) {
+                    if (post.file !== null) {
+                        const formdata = new FormData();
+                        formdata.append("file", post.file);
+                        fetch('http://localhost:8081/api/audios', {
+                            method: 'POST',
+                            headers: {
+                                'x-access-token': token
+                            },
+                            body: formdata
+                        }).then((res) => {
+                            res.json().then((audio) => {
+                                const audioId = audio.id;
+                                const formdata = new FormData();
+                                formdata.append("file", post.image);
+                                if (post.image !== null) {
+                                    fetch('http://localhost:8081/api/images', {
+                                        method: 'POST',
+                                        headers: {
+                                            'x-access-token': token
+                                        },
+                                        body: formdata
+                                    }).then((res) => {
+                                        res.json().then((image) => {
+                                            const imageId = image.id;
+                                            fetch(`http://localhost:8081/api/publications/${imageId}/${audioId}/0`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'x-access-token': token
+                                                },
+                                                body: JSON.stringify(newPost)
+                                            }).then((res) => {
+                                                if (res.status === 200) {
+                                                    res.json().then((publication) => {
+                                                        const publicationId = publication.id;
+                                                        if (post.tags !== null) {
+                                                            const arr = post.tags.split(",").map((item: string) => item.trim());
+                                                            for (let i = 0; i < arr.length; i++) {
+                                                                const tag = arr[i];
+                                                                fetch(`http://localhost:8081/api/tags?name=${tag}`, {
+                                                                    method: 'GET',
+                                                                    headers: {
+                                                                        'x-access-token': token
+                                                                    }
+                                                                }).then((res) => {
+                                                                    res.json().then((tags) => {
+                                                                        if (tags.length > 0) {
+                                                                            let tagId = tags[0].id;
+                                                                            fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                                method: 'POST',
+                                                                                headers: {
+                                                                                    'x-access-token': token
+                                                                                }
+                                                                            }).then((res) => {
+                                                                                if (res.status === 200) {
+                                                                                    // window.location.href = '/profile'
+                                                                                } else {
+                                                                                    console.log(res.statusText);
+                                                                                }
+                                                                            });
+                                                                        } else {
+                                                                            let newTag = { name: tag }
+                                                                            fetch(`http://localhost:8081/api/tags`, {
+                                                                                method: 'POST',
+                                                                                headers: {
+                                                                                    'Content-Type': 'application/json',
+                                                                                    'x-access-token': token
+                                                                                },
+                                                                                body: JSON.stringify(newTag)
+                                                                            }).then((res) => {
+                                                                                if (res.status === 200) {
+                                                                                    res.json().then((tag) => {
+                                                                                        let tagId = tag.id;
+                                                                                        fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                                            method: 'POST',
+                                                                                            headers: {
+                                                                                                'x-access-token': token
+                                                                                            }
+                                                                                        }).then((res) => {
+                                                                                            if (res.status === 200) {
+                                                                                                // window.location.href = '/profile'
+                                                                                            } else {
+                                                                                                console.log(res.statusText);
+                                                                                            }
+                                                                                        });
+                                                                                    });
+                                                                                } else {
+                                                                                    console.log(res.statusText);
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                    });
+                                                                });
+                                                            }
+                                                            window.location.href = '/profile';
+                                                        }
+                                                    }).catch((err) => {
+                                                        console.log(err);
+                                                    });
+                                                } else {
+                                                    console.log(res.statusText);
+                                                    setShowErrors(true);
+                                                    setErrors('You can\'t let the title or the singer without filling!');
+                                                }
+                                            });
                                         });
                                     });
-                                });
-                            } else if (post.urlImg != null) {
-                                newPost = { ...newPost, urlImg: post.urlImg };
-                                fetch(`http://localhost:8081/api/publications/0/${audioId}/0`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'x-access-token': token
-                                    },
-                                    body: JSON.stringify(newPost)
-                                }).then((res) => {
-                                    if (res.status === 200) {
-                                        window.location.href = '/profile';
-                                    } else {
-                                        console.log(res.statusText);
-                                    }
-                                });
-                            } else {
-                                fetch(`http://localhost:8081/api/publications/0/${audioId}/0`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'x-access-token': token
-                                    },
-                                    body: JSON.stringify(newPost)
-                                }).then((res) => {
-                                    if (res.status === 200) {
-                                        window.location.href = '/profile';
-                                    } else {
-                                        console.log(res.statusText);
-                                    }
-                                });
-                            }
-                        });
-                    });
-                } else if (post.urlFile !== null) {
-                    if (post.image !== null) {
-                        fetch('http://localhost:8081/api/images', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'x-access-token': token
-                            },
-                            body: JSON.stringify(post.image)
-                        }).then((res) => {
-                            res.json().then((image) => {
-                                newPost = { ...newPost, urlAudio: post.urlFile };
-                                const imageId = image.id;
-                                fetch(`http://localhost:8081/api/publications/${imageId}/0/0`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'x-access-token': token
-                                    },
-                                    body: JSON.stringify(newPost)
-                                }).then((res) => {
-                                    if (res.status === 200) {
-                                        window.location.href = '/profile';
-                                    } else {
-                                        console.log(res.statusText);
-                                    }
-                                });
+                                } else if (post.urlImg != null) {
+                                    newPost = { ...newPost, urlImg: post.urlImg };
+                                    fetch(`http://localhost:8081/api/publications/0/${audioId}/0`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'x-access-token': token
+                                        },
+                                        body: JSON.stringify(newPost)
+                                    }).then((res) => {
+                                        if (res.status === 200) {
+                                            res.json().then((publication) => {
+                                                const publicationId = publication.id;
+                                                if (post.tags !== null) {
+                                                    const arr = post.tags.split(",").map((item: string) => item.trim());
+                                                    for (let i = 0; i < arr.length; i++) {
+                                                        const tag = arr[i];
+                                                        fetch(`http://localhost:8081/api/tags?name=${tag}`, {
+                                                            method: 'GET',
+                                                            headers: {
+                                                                'x-access-token': token
+                                                            }
+                                                        }).then((res) => {
+                                                            res.json().then((tags) => {
+                                                                if (tags.length > 0) {
+                                                                    let tagId = tags[0].id;
+                                                                    fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'x-access-token': token
+                                                                        }
+                                                                    }).then((res) => {
+                                                                        if (res.status === 200) {
+                                                                            // window.location.href = '/profile'
+                                                                        } else {
+                                                                            console.log(res.statusText);
+                                                                        }
+                                                                    });
+                                                                } else {
+                                                                    let newTag = { name: tag }
+                                                                    fetch(`http://localhost:8081/api/tags`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'Content-Type': 'application/json',
+                                                                            'x-access-token': token
+                                                                        },
+                                                                        body: JSON.stringify(newTag)
+                                                                    }).then((res) => {
+                                                                        if (res.status === 200) {
+                                                                            res.json().then((tag) => {
+                                                                                let tagId = tag.id;
+                                                                                fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                                    method: 'POST',
+                                                                                    headers: {
+                                                                                        'x-access-token': token
+                                                                                    }
+                                                                                }).then((res) => {
+                                                                                    if (res.status === 200) {
+                                                                                        // window.location.href = '/profile'
+                                                                                    } else {
+                                                                                        console.log(res.statusText);
+                                                                                    }
+                                                                                });
+                                                                            });
+                                                                        } else {
+                                                                            console.log(res.statusText);
+                                                                        }
+                                                                    });
+                                                                }
+                                                            });
+                                                        });
+                                                    }
+                                                    window.location.href = '/profile';
+                                                }
+                                            }).catch((err) => {
+                                                console.log(err);
+                                            });
+                                        } else {
+                                            console.log(res.statusText);
+                                            setShowErrors(true);
+                                            setErrors('You can\'t let the title or the singer without filling!');
+                                        }
+                                    });
+                                } else {
+                                    fetch(`http://localhost:8081/api/publications/0/${audioId}/0`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'x-access-token': token
+                                        },
+                                        body: JSON.stringify(newPost)
+                                    }).then((res) => {
+                                        if (res.status === 200) {
+                                            res.json().then((publication) => {
+                                                const publicationId = publication.id;
+                                                if (post.tags !== null) {
+                                                    const arr = post.tags.split(",").map((item: string) => item.trim());
+                                                    for (let i = 0; i < arr.length; i++) {
+                                                        const tag = arr[i];
+                                                        fetch(`http://localhost:8081/api/tags?name=${tag}`, {
+                                                            method: 'GET',
+                                                            headers: {
+                                                                'x-access-token': token
+                                                            }
+                                                        }).then((res) => {
+                                                            res.json().then((tags) => {
+                                                                if (tags.length > 0) {
+                                                                    let tagId = tags[0].id;
+                                                                    fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'x-access-token': token
+                                                                        }
+                                                                    }).then((res) => {
+                                                                        if (res.status === 200) {
+                                                                            // window.location.href = '/profile'
+                                                                        } else {
+                                                                            console.log(res.statusText);
+                                                                        }
+                                                                    });
+                                                                } else {
+                                                                    let newTag = { name: tag }
+                                                                    fetch(`http://localhost:8081/api/tags`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'Content-Type': 'application/json',
+                                                                            'x-access-token': token
+                                                                        },
+                                                                        body: JSON.stringify(newTag)
+                                                                    }).then((res) => {
+                                                                        if (res.status === 200) {
+                                                                            res.json().then((tag) => {
+                                                                                let tagId = tag.id;
+                                                                                fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                                    method: 'POST',
+                                                                                    headers: {
+                                                                                        'x-access-token': token
+                                                                                    }
+                                                                                }).then((res) => {
+                                                                                    if (res.status === 200) {
+                                                                                        // window.location.href = '/profile'
+                                                                                    } else {
+                                                                                        console.log(res.statusText);
+                                                                                    }
+                                                                                });
+                                                                            });
+                                                                        } else {
+                                                                            console.log(res.statusText);
+                                                                        }
+                                                                    });
+                                                                }
+                                                            });
+                                                        });
+                                                    }
+                                                    window.location.href = '/profile';
+                                                }
+                                            }).catch((err) => {
+                                                console.log(err);
+                                            });
+                                        } else {
+                                            console.log(res.statusText);
+                                            setShowErrors(true);
+                                            setErrors('You can\'t let the title or the singer without filling!');
+                                        }
+                                    });
+                                }
                             });
                         });
-                    } else if (post.urlImg != null) {
-                        newPost = { ...newPost, urlImg: post.urlImg };
-                        fetch(`http://localhost:8081/api/publications/0/0/0`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'x-access-token': token
-                            },
-                            body: JSON.stringify(newPost)
-                        }).then((res) => {
-                            if (res.status === 200) {
-                                window.location.href = '/profile';
-                            } else {
-                                console.log(res.statusText);
-                            }
-                        });
-                    } else {
-                        fetch(`http://localhost:8081/api/publications/0/0/0`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'x-access-token': token
-                            },
-                            body: JSON.stringify(newPost)
-                        }).then((res) => {
-                            if (res.status === 200) {
-                                window.location.href = '/profile';
-                            } else {
-                                console.log(res.statusText);
-                            }
-                        });
-                    }
-                } else {
-                    setShowErrors(true);
-                    setErrors('You must select a file or give an URL for your file!');
-                }
-
-            }
-            if (!post.isAudio) {
-                if (post.file !== null) {
-                    fetch('http://localhost:8081/api/videos', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'x-access-token': token
-                        },
-                        body: JSON.stringify(post.file)
-                    }).then((res) => {
-                        res.json().then((video) => {
-                            const videoId = video.id;
-                            if (post.image !== null) {
-                                fetch('http://localhost:8081/api/images', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'x-access-token': token
-                                    },
-                                    body: JSON.stringify(post.image)
-                                }).then((res) => {
-                                    res.json().then((image) => {
-                                        const imageId = image.id;
-                                        fetch(`http://localhost:8081/api/publications/${imageId}/${videoId}/0`, {
-                                            method: 'POST',
-                                            headers: {
-                                                'Content-Type': 'application/json',
-                                                'x-access-token': token
-                                            },
-                                            body: JSON.stringify(newPost)
-                                        }).then((res) => {
-                                            if (res.status === 200) {
-                                                window.location.href = '/profile';
-                                            } else {
-                                                console.log(res.statusText);
-                                            }
-                                        });
+                    } else if (post.urlFile !== null) {
+                        if (post.image !== null) {
+                            console.log(post.image);
+                            const formdata = new FormData();
+                            formdata.append("file", post.image);
+                            fetch('http://localhost:8081/api/images', {
+                                method: 'POST',
+                                headers: {
+                                    'x-access-token': token
+                                },
+                                body: formdata
+                            }).then((res) => {
+                                res.json().then((image) => {
+                                    newPost = { ...newPost, urlAudio: post.urlFile };
+                                    const imageId = image.id;
+                                    fetch(`http://localhost:8081/api/publications/${imageId}/0/0`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'x-access-token': token
+                                        },
+                                        body: JSON.stringify(newPost)
+                                    }).then((res) => {
+                                        if (res.status === 200) {
+                                            res.json().then((publication) => {
+                                                const publicationId = publication.id;
+                                                if (post.tags !== null) {
+                                                    const arr = post.tags.split(",").map((item: string) => item.trim());
+                                                    for (let i = 0; i < arr.length; i++) {
+                                                        const tag = arr[i];
+                                                        fetch(`http://localhost:8081/api/tags?name=${tag}`, {
+                                                            method: 'GET',
+                                                            headers: {
+                                                                'x-access-token': token
+                                                            }
+                                                        }).then((res) => {
+                                                            res.json().then((tags) => {
+                                                                if (tags.length > 0) {
+                                                                    let tagId = tags[0].id;
+                                                                    fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'x-access-token': token
+                                                                        }
+                                                                    }).then((res) => {
+                                                                        if (res.status === 200) {
+                                                                            // window.location.href = '/profile'
+                                                                        } else {
+                                                                            console.log(res.statusText);
+                                                                        }
+                                                                    });
+                                                                } else {
+                                                                    let newTag = { name: tag }
+                                                                    fetch(`http://localhost:8081/api/tags`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'Content-Type': 'application/json',
+                                                                            'x-access-token': token
+                                                                        },
+                                                                        body: JSON.stringify(newTag)
+                                                                    }).then((res) => {
+                                                                        if (res.status === 200) {
+                                                                            res.json().then((tag) => {
+                                                                                let tagId = tag.id;
+                                                                                fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                                    method: 'POST',
+                                                                                    headers: {
+                                                                                        'x-access-token': token
+                                                                                    }
+                                                                                }).then((res) => {
+                                                                                    if (res.status === 200) {
+                                                                                        // window.location.href = '/profile'
+                                                                                    } else {
+                                                                                        console.log(res.statusText);
+                                                                                    }
+                                                                                });
+                                                                            });
+                                                                        } else {
+                                                                            console.log(res);
+                                                                            console.log(res.statusText);
+                                                                        }
+                                                                    });
+                                                                }
+                                                            });
+                                                        });
+                                                    }
+                                                    window.location.href = '/profile';
+                                                }
+                                            }).catch((err) => {
+                                                console.log(err);
+                                            });
+                                        } else {
+                                            console.log(res.statusText);
+                                            setShowErrors(true);
+                                            setErrors('You can\'t let the title or the singer without filling!');
+                                        }
                                     });
                                 });
-                            } else if (post.urlImg != null) {
-                                newPost = { ...newPost, urlImg: post.urlImg };
-                                fetch(`http://localhost:8081/api/publications/0/${videoId}/0`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'x-access-token': token
-                                    },
-                                    body: JSON.stringify(newPost)
-                                }).then((res) => {
-                                    if (res.status === 200) {
-                                        window.location.href = '/profile';
-                                    } else {
-                                        console.log(res.statusText);
-                                    }
-                                });
-                            } else {
-                                fetch(`http://localhost:8081/api/publications/0/${videoId}/0`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'x-access-token': token
-                                    },
-                                    body: JSON.stringify(newPost)
-                                }).then((res) => {
-                                    if (res.status === 200) {
-                                        window.location.href = '/profile';
-                                    } else {
-                                        console.log(res.statusText);
-                                    }
-                                });
-                            }
-                        });
-                    });
-                } else if (post.urlFile !== null) {
-                    if (post.image !== null) {
-                        fetch('http://localhost:8081/api/images', {
+                            });
+                        } else if (post.urlImg != null) {
+                            newPost = { ...newPost, urlImg: post.urlImg };
+                            fetch(`http://localhost:8081/api/publications/0/0/0`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'x-access-token': token
+                                },
+                                body: JSON.stringify(newPost)
+                            }).then((res) => {
+                                if (res.status === 200) {
+                                    res.json().then((publication) => {
+                                        const publicationId = publication.id;
+                                        if (post.tags !== null) {
+                                            const arr = post.tags.split(",").map((item: string) => item.trim());
+                                            for (let i = 0; i < arr.length; i++) {
+                                                const tag = arr[i];
+                                                fetch(`http://localhost:8081/api/tags?name=${tag}`, {
+                                                    method: 'GET',
+                                                    headers: {
+                                                        'x-access-token': token
+                                                    }
+                                                }).then((res) => {
+                                                    res.json().then((tags) => {
+                                                        if (tags.length > 0) {
+                                                            let tagId = tags[0].id;
+                                                            fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'x-access-token': token
+                                                                }
+                                                            }).then((res) => {
+                                                                if (res.status === 200) {
+                                                                    // window.location.href = '/profile'
+                                                                } else {
+                                                                    console.log(res.statusText);
+                                                                }
+                                                            });
+                                                        } else {
+                                                            let newTag = { name: tag }
+                                                            fetch(`http://localhost:8081/api/tags`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'x-access-token': token
+                                                                },
+                                                                body: JSON.stringify(newTag)
+                                                            }).then((res) => {
+                                                                if (res.status === 200) {
+                                                                    res.json().then((tag) => {
+                                                                        let tagId = tag.id;
+                                                                        fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                            method: 'POST',
+                                                                            headers: {
+                                                                                'x-access-token': token
+                                                                            }
+                                                                        }).then((res) => {
+                                                                            if (res.status === 200) {
+                                                                                // window.location.href = '/profile'
+                                                                            } else {
+                                                                                console.log(res.statusText);
+                                                                            }
+                                                                        });
+                                                                    });
+                                                                } else {
+                                                                    console.log(res.statusText);
+                                                                }
+                                                            });
+                                                        }
+                                                    });
+                                                });
+                                            }
+                                            window.location.href = '/profile';
+                                        }
+                                    }).catch((err) => {
+                                        console.log(err);
+                                    });
+                                } else {
+                                    console.log(res.statusText);
+                                    setShowErrors(true);
+                                    setErrors('You can\'t let the title or the singer without filling!');
+                                }
+                            });
+                        } else {
+                            fetch(`http://localhost:8081/api/publications/0/0/0`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'x-access-token': token
+                                },
+                                body: JSON.stringify(newPost)
+                            }).then((res) => {
+                                if (res.status === 200) {
+                                    res.json().then((publication) => {
+                                        const publicationId = publication.id;
+                                        if (post.tags !== null) {
+                                            const arr = post.tags.split(",").map((item: string) => item.trim());
+                                            for (let i = 0; i < arr.length; i++) {
+                                                const tag = arr[i];
+                                                fetch(`http://localhost:8081/api/tags?name=${tag}`, {
+                                                    method: 'GET',
+                                                    headers: {
+                                                        'x-access-token': token
+                                                    }
+                                                }).then((res) => {
+                                                    res.json().then((tags) => {
+                                                        if (tags.length > 0) {
+                                                            let tagId = tags[0].id;
+                                                            fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'x-access-token': token
+                                                                }
+                                                            }).then((res) => {
+                                                                if (res.status === 200) {
+                                                                    // window.location.href = '/profile'
+                                                                } else {
+                                                                    console.log(res.statusText);
+                                                                }
+                                                            });
+                                                        } else {
+                                                            let newTag = { name: tag }
+                                                            fetch(`http://localhost:8081/api/tags`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'x-access-token': token
+                                                                },
+                                                                body: JSON.stringify(newTag)
+                                                            }).then((res) => {
+                                                                if (res.status === 200) {
+                                                                    res.json().then((tag) => {
+                                                                        let tagId = tag.id;
+                                                                        fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                            method: 'POST',
+                                                                            headers: {
+                                                                                'x-access-token': token
+                                                                            }
+                                                                        }).then((res) => {
+                                                                            if (res.status === 200) {
+                                                                                // window.location.href = '/profile'
+                                                                            } else {
+                                                                                console.log(res.statusText);
+                                                                            }
+                                                                        });
+                                                                    });
+                                                                } else {
+                                                                    console.log(res.statusText);
+                                                                }
+                                                            });
+                                                        }
+                                                    });
+                                                });
+                                            }
+                                            window.location.href = '/profile';
+                                        }
+                                    }).catch((err) => {
+                                        console.log(err);
+                                    });
+                                } else {
+                                    console.log(res.statusText);
+                                    setShowErrors(true);
+                                    setErrors('You can\'t let the title or the singer without filling!');
+                                }
+                            });
+                        }
+                    } else {
+                        setShowErrors(true);
+                        setErrors('You must select a file or give an URL for your file!');
+                    }
+
+                }
+                if (!post.isAudio) {
+                    const formdata = new FormData();
+                    formdata.append("file", post.file);
+                    if (post.file !== null) {
+                        fetch('http://localhost:8081/api/videos', {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json',
                                 'x-access-token': token
                             },
-                            body: JSON.stringify(post.image)
+                            body: formdata
                         }).then((res) => {
-                            res.json().then((image) => {
-                                newPost = { ...newPost, urlVideo: post.urlFile };
-                                const imageId = image.id;
-                                fetch(`http://localhost:8081/api/publications/${imageId}/0/0`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'x-access-token': token
-                                    },
-                                    body: JSON.stringify(newPost)
-                                }).then((res) => {
-                                    if (res.status === 200) {
-                                        window.location.href = '/profile';
-                                    } else {
-                                        console.log(res.statusText);
-                                    }
-                                });
+                            res.json().then((video) => {
+                                const videoId = video.id;
+                                const formdata = new FormData();
+                                formdata.append("file", post.image);
+                                if (post.image !== null) {
+                                    fetch('http://localhost:8081/api/images', {
+                                        method: 'POST',
+                                        headers: {
+                                            'x-access-token': token
+                                        },
+                                        body: formdata
+                                    }).then((res) => {
+                                        res.json().then((image) => {
+                                            const imageId = image.id;
+                                            fetch(`http://localhost:8081/api/publications/${imageId}/0/${videoId}`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    'x-access-token': token
+                                                },
+                                                body: JSON.stringify(newPost)
+                                            }).then((res) => {
+                                                if (res.status === 200) {
+                                                    res.json().then((publication) => {
+                                                        const publicationId = publication.id;
+                                                        if (post.tags !== null) {
+                                                            const arr = post.tags.split(",").map((item: string) => item.trim());
+                                                            for (let i = 0; i < arr.length; i++) {
+                                                                const tag = arr[i];
+                                                                fetch(`http://localhost:8081/api/tags?name=${tag}`, {
+                                                                    method: 'GET',
+                                                                    headers: {
+                                                                        'x-access-token': token
+                                                                    }
+                                                                }).then((res) => {
+                                                                    res.json().then((tags) => {
+                                                                        if (tags.length > 0) {
+                                                                            let tagId = tags[0].id;
+                                                                            fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                                method: 'POST',
+                                                                                headers: {
+                                                                                    'x-access-token': token
+                                                                                }
+                                                                            }).then((res) => {
+                                                                                if (res.status === 200) {
+                                                                                    // window.location.href = '/profile'
+                                                                                } else {
+                                                                                    console.log(res.statusText);
+                                                                                }
+                                                                            });
+                                                                        } else {
+                                                                            let newTag = { name: tag }
+                                                                            fetch(`http://localhost:8081/api/tags`, {
+                                                                                method: 'POST',
+                                                                                headers: {
+                                                                                    'Content-Type': 'application/json',
+                                                                                    'x-access-token': token
+                                                                                },
+                                                                                body: JSON.stringify(newTag)
+                                                                            }).then((res) => {
+                                                                                if (res.status === 200) {
+                                                                                    res.json().then((tag) => {
+                                                                                        let tagId = tag.id;
+                                                                                        fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                                            method: 'POST',
+                                                                                            headers: {
+                                                                                                'x-access-token': token
+                                                                                            }
+                                                                                        }).then((res) => {
+                                                                                            if (res.status === 200) {
+                                                                                                // window.location.href = '/profile'
+                                                                                            } else {
+                                                                                                console.log(res.statusText);
+                                                                                            }
+                                                                                        });
+                                                                                    });
+                                                                                } else {
+                                                                                    console.log(res.statusText);
+                                                                                }
+                                                                            });
+                                                                        }
+                                                                    });
+                                                                });
+                                                            }
+                                                            window.location.href = '/profile';
+                                                        }
+                                                    }).catch((err) => {
+                                                        console.log(err);
+                                                    });
+                                                } else {
+                                                    console.log(res.statusText);
+                                                    setShowErrors(true);
+                                                    setErrors('You can\'t let the title or the singer without filling!');
+                                                }
+                                            });
+                                        });
+                                    });
+                                } else if (post.urlImg != null) {
+                                    newPost = { ...newPost, urlImg: post.urlImg };
+                                    fetch(`http://localhost:8081/api/publications/0/0/${videoId}`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'x-access-token': token
+                                        },
+                                        body: JSON.stringify(newPost)
+                                    }).then((res) => {
+                                        if (res.status === 200) {
+                                            res.json().then((publication) => {
+                                                const publicationId = publication.id;
+                                                if (post.tags !== null) {
+                                                    const arr = post.tags.split(",").map((item: string) => item.trim());
+                                                    for (let i = 0; i < arr.length; i++) {
+                                                        const tag = arr[i];
+                                                        fetch(`http://localhost:8081/api/tags?name=${tag}`, {
+                                                            method: 'GET',
+                                                            headers: {
+                                                                'x-access-token': token
+                                                            }
+                                                        }).then((res) => {
+                                                            res.json().then((tags) => {
+                                                                if (tags.length > 0) {
+                                                                    let tagId = tags[0].id;
+                                                                    fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'x-access-token': token
+                                                                        }
+                                                                    }).then((res) => {
+                                                                        if (res.status === 200) {
+                                                                            // window.location.href = '/profile'
+                                                                        } else {
+                                                                            console.log(res.statusText);
+                                                                        }
+                                                                    });
+                                                                } else {
+                                                                    let newTag = { name: tag }
+                                                                    fetch(`http://localhost:8081/api/tags`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'Content-Type': 'application/json',
+                                                                            'x-access-token': token
+                                                                        },
+                                                                        body: JSON.stringify(newTag)
+                                                                    }).then((res) => {
+                                                                        if (res.status === 200) {
+                                                                            res.json().then((tag) => {
+                                                                                let tagId = tag.id;
+                                                                                fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                                    method: 'POST',
+                                                                                    headers: {
+                                                                                        'x-access-token': token
+                                                                                    }
+                                                                                }).then((res) => {
+                                                                                    if (res.status === 200) {
+                                                                                        // window.location.href = '/profile'
+                                                                                    } else {
+                                                                                        console.log(res.statusText);
+                                                                                    }
+                                                                                });
+                                                                            });
+                                                                        } else {
+                                                                            console.log(res.statusText);
+                                                                        }
+                                                                    });
+                                                                }
+                                                            });
+                                                        });
+                                                    }
+                                                    window.location.href = '/profile';
+                                                }
+                                            }).catch((err) => {
+                                                console.log(err);
+                                            });
+                                        } else {
+                                            console.log(res.statusText);
+                                            setShowErrors(true);
+                                            setErrors('You can\'t let the title or the singer without filling!');
+                                        }
+                                    });
+                                } else {
+                                    fetch(`http://localhost:8081/api/publications/0/0/${videoId}`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'x-access-token': token
+                                        },
+                                        body: JSON.stringify(newPost)
+                                    }).then((res) => {
+                                        if (res.status === 200) {
+                                            res.json().then((publication) => {
+                                                const publicationId = publication.id;
+                                                if (post.tags !== null) {
+                                                    const arr = post.tags.split(",").map((item: string) => item.trim());
+                                                    for (let i = 0; i < arr.length; i++) {
+                                                        const tag = arr[i];
+                                                        fetch(`http://localhost:8081/api/tags?name=${tag}`, {
+                                                            method: 'GET',
+                                                            headers: {
+                                                                'x-access-token': token
+                                                            }
+                                                        }).then((res) => {
+                                                            res.json().then((tags) => {
+                                                                if (tags.length > 0) {
+                                                                    let tagId = tags[0].id;
+                                                                    fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'x-access-token': token
+                                                                        }
+                                                                    }).then((res) => {
+                                                                        if (res.status === 200) {
+                                                                            // window.location.href = '/profile'
+                                                                        } else {
+                                                                            console.log(res.statusText);
+                                                                        }
+                                                                    });
+                                                                } else {
+                                                                    let newTag = { name: tag }
+                                                                    fetch(`http://localhost:8081/api/tags`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'Content-Type': 'application/json',
+                                                                            'x-access-token': token
+                                                                        },
+                                                                        body: JSON.stringify(newTag)
+                                                                    }).then((res) => {
+                                                                        if (res.status === 200) {
+                                                                            res.json().then((tag) => {
+                                                                                let tagId = tag.id;
+                                                                                fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                                    method: 'POST',
+                                                                                    headers: {
+                                                                                        'x-access-token': token
+                                                                                    }
+                                                                                }).then((res) => {
+                                                                                    if (res.status === 200) {
+                                                                                        // window.location.href = '/profile'
+                                                                                    } else {
+                                                                                        console.log(res.statusText);
+                                                                                    }
+                                                                                });
+                                                                            });
+                                                                        } else {
+                                                                            console.log(res.statusText);
+                                                                        }
+                                                                    });
+                                                                }
+                                                            });
+                                                        });
+                                                    }
+                                                    window.location.href = '/profile';
+                                                }
+                                            }).catch((err) => {
+                                                console.log(err);
+                                            });
+                                        } else {
+                                            console.log(res.statusText);
+                                            setShowErrors(true);
+                                            setErrors('You can\'t let the title or the singer without filling!');
+                                        }
+                                    });
+                                }
                             });
                         });
-                    } else if (post.urlImg != null) {
-                        newPost = { ...newPost, urlImg: post.urlImg };
-                        fetch(`http://localhost:8081/api/publications/0/0/0`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'x-access-token': token
-                            },
-                            body: JSON.stringify(newPost)
-                        }).then((res) => {
-                            if (res.status === 200) {
-                                window.location.href = '/profile';
-                            } else {
-                                console.log(res.statusText);
-                            }
-                        });
+                    } else if (post.urlFile !== null) {
+                        if (post.image !== null) {
+                            const formdata = new FormData();
+                            formdata.append("file", post.image);
+                            fetch('http://localhost:8081/api/images', {
+                                method: 'POST',
+                                headers: {
+                                    'x-access-token': token
+                                },
+                                body: formdata
+                            }).then((res) => {
+                                res.json().then((image) => {
+                                    newPost = { ...newPost, urlVideo: post.urlFile };
+                                    const imageId = image.id;
+                                    fetch(`http://localhost:8081/api/publications/${imageId}/0/0`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'x-access-token': token
+                                        },
+                                        body: JSON.stringify(newPost)
+                                    }).then((res) => {
+                                        if (res.status === 200) {
+                                            res.json().then((publication) => {
+                                                const publicationId = publication.id;
+                                                if (post.tags !== null) {
+                                                    const arr = post.tags.split(",").map((item: string) => item.trim());
+                                                    for (let i = 0; i < arr.length; i++) {
+                                                        const tag = arr[i];
+                                                        fetch(`http://localhost:8081/api/tags?name=${tag}`, {
+                                                            method: 'GET',
+                                                            headers: {
+                                                                'x-access-token': token
+                                                            }
+                                                        }).then((res) => {
+                                                            res.json().then((tags) => {
+                                                                if (tags.length > 0) {
+                                                                    let tagId = tags[0].id;
+                                                                    fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'x-access-token': token
+                                                                        }
+                                                                    }).then((res) => {
+                                                                        if (res.status === 200) {
+                                                                            // window.location.href = '/profile'
+                                                                        } else {
+                                                                            console.log(res.statusText);
+                                                                        }
+                                                                    });
+                                                                } else {
+                                                                    let newTag = { name: tag }
+                                                                    fetch(`http://localhost:8081/api/tags`, {
+                                                                        method: 'POST',
+                                                                        headers: {
+                                                                            'Content-Type': 'application/json',
+                                                                            'x-access-token': token
+                                                                        },
+                                                                        body: JSON.stringify(newTag)
+                                                                    }).then((res) => {
+                                                                        if (res.status === 200) {
+                                                                            res.json().then((tag) => {
+                                                                                let tagId = tag.id;
+                                                                                fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                                    method: 'POST',
+                                                                                    headers: {
+                                                                                        'x-access-token': token
+                                                                                    }
+                                                                                }).then((res) => {
+                                                                                    if (res.status === 200) {
+                                                                                        // window.location.href = '/profile'
+                                                                                    } else {
+                                                                                        console.log(res.statusText);
+                                                                                    }
+                                                                                });
+                                                                            });
+                                                                        } else {
+                                                                            console.log(res.statusText);
+                                                                        }
+                                                                    });
+                                                                }
+                                                            });
+                                                        });
+                                                    }
+                                                    window.location.href = '/profile';
+                                                }
+                                            }).catch((err) => {
+                                                console.log(err);
+                                            });
+                                        } else {
+                                            console.log(res.statusText);
+                                            setShowErrors(true);
+                                            setErrors('You can\'t let the title or the singer without filling!');
+                                        }
+                                    });
+                                });
+                            });
+                        } else if (post.urlImg != null) {
+                            newPost = { ...newPost, urlImg: post.urlImg };
+                            fetch(`http://localhost:8081/api/publications/0/0/0`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'x-access-token': token
+                                },
+                                body: JSON.stringify(newPost)
+                            }).then((res) => {
+                                if (res.status === 200) {
+                                    res.json().then((publication) => {
+                                        const publicationId = publication.id;
+                                        if (post.tags !== null) {
+                                            const arr = post.tags.split(",").map((item: string) => item.trim());
+                                            for (let i = 0; i < arr.length; i++) {
+                                                const tag = arr[i];
+                                                fetch(`http://localhost:8081/api/tags?name=${tag}`, {
+                                                    method: 'GET',
+                                                    headers: {
+                                                        'x-access-token': token
+                                                    }
+                                                }).then((res) => {
+                                                    res.json().then((tags) => {
+                                                        if (tags.length > 0) {
+                                                            let tagId = tags[0].id;
+                                                            fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'x-access-token': token
+                                                                }
+                                                            }).then((res) => {
+                                                                if (res.status === 200) {
+                                                                    // window.location.href = '/profile'
+                                                                } else {
+                                                                    console.log(res.statusText);
+                                                                }
+                                                            });
+                                                        } else {
+                                                            let newTag = { name: tag }
+                                                            fetch(`http://localhost:8081/api/tags`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'x-access-token': token
+                                                                },
+                                                                body: JSON.stringify(newTag)
+                                                            }).then((res) => {
+                                                                if (res.status === 200) {
+                                                                    res.json().then((tag) => {
+                                                                        let tagId = tag.id;
+                                                                        fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                            method: 'POST',
+                                                                            headers: {
+                                                                                'x-access-token': token
+                                                                            }
+                                                                        }).then((res) => {
+                                                                            if (res.status === 200) {
+                                                                                // window.location.href = '/profile'
+                                                                            } else {
+                                                                                console.log(res.statusText);
+                                                                            }
+                                                                        });
+                                                                    });
+                                                                } else {
+                                                                    console.log(res.statusText);
+                                                                }
+                                                            });
+                                                        }
+                                                    });
+                                                });
+                                            }
+                                            window.location.href = '/profile';
+                                        }
+                                    }).catch((err) => {
+                                        console.log(err);
+                                    });
+                                } else {
+                                    console.log(res.statusText);
+                                    setShowErrors(true);
+                                    setErrors('You can\'t let the title or the singer without filling!');
+                                }
+                            });
+                        } else {
+                            fetch(`http://localhost:8081/api/publications/0/0/0`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'x-access-token': token
+                                },
+                                body: JSON.stringify(newPost)
+                            }).then((res) => {
+                                if (res.status === 200) {
+                                    res.json().then((publication) => {
+                                        const publicationId = publication.id;
+                                        if (post.tags !== null) {
+                                            const arr = post.tags.split(",").map((item: string) => item.trim());
+                                            for (let i = 0; i < arr.length; i++) {
+                                                const tag = arr[i];
+                                                fetch(`http://localhost:8081/api/tags?name=${tag}`, {
+                                                    method: 'GET',
+                                                    headers: {
+                                                        'x-access-token': token
+                                                    }
+                                                }).then((res) => {
+                                                    res.json().then((tags) => {
+                                                        if (tags.length > 0) {
+                                                            let tagId = tags[0].id;
+                                                            fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'x-access-token': token
+                                                                }
+                                                            }).then((res) => {
+                                                                if (res.status === 200) {
+                                                                    // window.location.href = '/profile'
+                                                                } else {
+                                                                    console.log(res.statusText);
+                                                                }
+                                                            });
+                                                        } else {
+                                                            let newTag = { name: tag }
+                                                            fetch(`http://localhost:8081/api/tags`, {
+                                                                method: 'POST',
+                                                                headers: {
+                                                                    'Content-Type': 'application/json',
+                                                                    'x-access-token': token
+                                                                },
+                                                                body: JSON.stringify(newTag)
+                                                            }).then((res) => {
+                                                                if (res.status === 200) {
+                                                                    res.json().then((tag) => {
+                                                                        let tagId = tag.id;
+                                                                        fetch(`http://localhost:8081/api/publications/${publicationId}/tags/${tagId}`, {
+                                                                            method: 'POST',
+                                                                            headers: {
+                                                                                'x-access-token': token
+                                                                            }
+                                                                        }).then((res) => {
+                                                                            if (res.status === 200) {
+                                                                                // window.location.href = '/profile'
+                                                                            } else {
+                                                                                console.log(res.statusText);
+                                                                            }
+                                                                        });
+                                                                    });
+                                                                } else {
+                                                                    console.log(res.statusText);
+                                                                }
+                                                            });
+                                                        }
+                                                    });
+                                                });
+                                            }
+                                            window.location.href = '/profile';
+                                        }
+                                    }).catch((err) => {
+                                        console.log(err);
+                                    });
+                                } else {
+                                    console.log(res.statusText);
+                                    setShowErrors(true);
+                                    setErrors('You can\'t let the title or the singer without filling!');
+                                }
+                            });
+                        }
                     } else {
-                        fetch(`http://localhost:8081/api/publications/0/0/0`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'x-access-token': token
-                            },
-                            body: JSON.stringify(newPost)
-                        }).then((res) => {
-                            if (res.status === 200) {
-                                window.location.href = '/profile';
-                            } else {
-                                console.log(res.statusText);
-                            }
-                        });
+                        setShowErrors(true);
+                        setErrors('You must select a file or give an URL for your file!');
                     }
-                } else {
-                    setShowErrors(true);
-                    setErrors('You must select a file or give an URL for your file!');
-                }
 
+                }
             }
         }
     }
@@ -358,7 +1181,12 @@ const Upload = () => {
                         </Row>
                         <Row className='add-space'>
                             <Col>
-                                <Form.Control as='textarea' placeholder='Description' rows={7} onChange={(e) => setPost({ ...post, description: e.target.value })} />
+                                <Form.Control as='textarea' placeholder='Description' rows={4} onChange={(e) => setPost({ ...post, description: e.target.value })} />
+                            </Col>
+                        </Row>
+                        <Row className='add-space'>
+                            <Col>
+                                <Form.Control as='textarea' placeholder='Tags' rows={2} onChange={(e) => setPost({ ...post, tags: e.target.value })} />
                             </Col>
                         </Row>
                     </Col>
@@ -392,21 +1220,12 @@ const Upload = () => {
                 </Row>
                 <Row className='add-space'>
                     <Col className='text-center'>
-                        <Form.Group >
-                            <Form.Check
-                                type="radio"
-                                label="Audio"
-                                name="audioOrVideo"
-                                checked inline
-                                onChange={(e) => setPost({ ...post, isAudio: e.target.checked })}
-                            />
-                            <Form.Check
-                                type="radio"
-                                label="Video"
-                                name="audioOrVideo"
-                                inline
-                            />
-
+                        <Form.Group controlId="exampleForm.ControlSelect1">
+                            <Form.Label>Select media type</Form.Label>
+                            <Form.Control as="select" onChange={(e) => setPost({ ...post, isAudio: 'audio' === e.target.value ? true : false })}>
+                                <option value='audio'>Audio</option>
+                                <option value='video'>Video</option>
+                            </Form.Control>
                         </Form.Group>
                     </Col>
                 </Row>
