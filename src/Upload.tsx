@@ -70,9 +70,9 @@ const Upload = () => {
                         }).then((res) => {
                             res.json().then((audio) => {
                                 const audioId = audio.id;
-                                const formdata = new FormData();
-                                formdata.append("file", post.image);
                                 if (post.image !== null) {
+                                    const formdata = new FormData();
+                                    formdata.append("file", post.image);
                                     fetch('http://localhost:8081/api/images', {
                                         method: 'POST',
                                         headers: {
