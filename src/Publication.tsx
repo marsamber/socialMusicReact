@@ -256,7 +256,7 @@ const Publication = () => {
                 body: JSON.stringify(publicationUpdated)
             }).then((res) => {
                 if (res.status === 200) {
-                    window.location.href = '/profile';
+                    window.location.href = `/${publication.id}`;
                 } else {
                     console.log(res.statusText);
                 }

@@ -63,6 +63,30 @@ const Publication = (props: any) => {
     console.log(props)
     let id = `/${props.pub.id}`;
     const [imgSrc, setImgSrc] = useState('');
+    const [username, setUsername] = useState('');
+    const [me, setMe] = useState('');
+
+    const loadUser = () => {
+        let token = localStorage.getItem('token');
+        if (token !== null) {
+            fetch(`http://localhost:8081/api/users/${props.pub.userId}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-token': token
+                }
+            }).then((res) => {
+                if (res.status === 200) {
+                    res.json().then((user) => {
+                        setUsername(user.username);
+                    });
+                } else {
+                    console.log(res.statusText);
+                }
+            }).catch((err) => {
+                console.log(err);
+            });
+        }
+    }
 
     const loadImages = () => {
         if (props.pub.image !== null) {
@@ -85,17 +109,22 @@ const Publication = (props: any) => {
 
     useEffect(() => {
         loadImages();
+        loadUser();
+
+        let aux = localStorage.getItem('userId');
+        if (aux !== null)
+            setMe(aux);
     }, []);
 
     return (<Col id='col-m-tb' xl={3} sm={6} xs={12} >
 
         <Link to={id}>
             <div className='textIm'>
-                <a href={`/user/${props.pub.userId}`} onClick={(e) => e.stopPropagation()} style={{
+                <a href={props.pub.userId === me ? '/profile' : `/user/${props.pub.userId}`} onClick={(e) => e.stopPropagation()} style={{
                     color: 'white',
                     textDecoration: 'none'
                 }} className=' text-center'>
-                    User {props.pub.userId} <br />
+                    {username} <br />
                     {props.pub.title}
                 </a>
             </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { Col, Row } from 'react-bootstrap';
+import { Button, Col, Form, FormControl, InputGroup, Modal, Row } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCog, faCheck, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faCheck, faTimes, faTrash, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import auth from './auth';
 import PublicationsList from './PublicationsList';
 
@@ -20,6 +20,8 @@ const Profile = () => {
     const [userId, setUserId] = useState<number | null>(null);
     const [showPublications, setShowPublications] = useState(false);
     const [showConfig, setShowConfig] = useState(false);
+    const [showEdit, setShowEdit] = useState(false);
+    const [user, setUser] = useState<any>();
 
     const getUser = () => {
         let aux = localStorage.getItem('userId');
@@ -42,6 +44,7 @@ const Profile = () => {
                         setLastname(resp.lastname === null ? '' : ' ' + resp.lastname);
                         setBiography(resp.biography === null ? '' : resp.biography);
                         setUserPublic(resp.public);
+                        setUser(resp);
                     });
                 } else {
                     console.log(res.statusText);
@@ -73,6 +76,33 @@ const Profile = () => {
                     console.log(resp.message);
                     console.log(res.statusText);
                 }
+            });
+        }
+    }
+
+    const validateForm = () => {
+        if (token !== null) {
+            let newUser = {
+                firstname: user.firstname,
+                lastname: user.lastname,
+                phone: user.phone,
+                biography: user.biography
+            }
+            const myHeaders = new Headers();
+            myHeaders.append("x-access-token", token);
+            myHeaders.append("Content-Type", "application/json");
+            fetch("http://localhost:8081/api/users", {
+                method: 'PUT',
+                headers: myHeaders,
+                body: JSON.stringify(newUser)
+            }).then((res) => {
+                if (res.status === 200) {
+                    window.location.href = '/profile';
+                } else {
+                    console.log(res.statusText);
+                }
+            }).catch((err) => {
+                console.log(err);
             });
         }
     }
@@ -127,9 +157,67 @@ const Profile = () => {
                     <Col className='text-center'><h4 >Public Profile <button className='btn' onClick={() => changePublic()}>{userPublic ? <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon> : <FontAwesomeIcon icon={faTimes}></FontAwesomeIcon>}</button></h4></Col>
                 </Row>
                 <Row>
+                    <Col className='text-center'><h4 >Edit Profile <button className='btn' onClick={() => setShowEdit(true)}><FontAwesomeIcon icon={faPencilAlt}></FontAwesomeIcon></button></h4></Col>
+                </Row>
+                <Row>
                     <Col className='text-center'><h4>Delete Account <button className='btn' onClick={() => deleteAccount()}><FontAwesomeIcon icon={faTrash}></FontAwesomeIcon></button></h4></Col>
                 </Row>
-            </div> : undefined
+
+                <Modal show={showEdit} onHide={() => setShowEdit(false)} size="sm"
+                    aria-labelledby="contained-modal-title-vcenter"
+                    centered>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Edit profile</Modal.Title>
+                    </Modal.Header>
+                    <Form
+                    // onSubmit={() => validateForm()}
+                    >
+                        <Modal.Body>
+                            <InputGroup className="mb-3">
+                                <InputGroup.Text id="basic-addon1">Firstname</InputGroup.Text>
+                                <FormControl
+                                    value={user.firstname}
+                                    aria-label="Firstname"
+                                    aria-describedby="basic-addon1"
+                                    onChange={(e) => setUser({ ...user, firstname: e.target.value })}
+                                />
+                            </InputGroup>
+                            <InputGroup className="mb-3">
+                                <InputGroup.Text id="basic-addon1">Lastname</InputGroup.Text>
+                                <FormControl
+                                    value={user.lastname}
+                                    aria-label="lastname"
+                                    aria-describedby="basic-addon1"
+                                    onChange={(e) => setUser({ ...user, lastname: e.target.value })}
+                                />
+                            </InputGroup>
+                            <InputGroup className="mb-3">
+                                <InputGroup.Text id="basic-addon1">Phone</InputGroup.Text>
+                                <FormControl
+                                    value={user.phone}
+                                    aria-label="phone"
+                                    aria-describedby="basic-addon1"
+                                    onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                                />
+                            </InputGroup>
+                            <InputGroup className="mb-3">
+                                <InputGroup.Text>Biography</InputGroup.Text>
+                                <FormControl as="textarea" aria-label="With textarea" value={user.biography} onChange={(e) => setUser({ ...user, biography: e.target.value })} />
+                            </InputGroup>
+
+                        </Modal.Body>
+                        <Modal.Footer className='justify-content-center'>
+                            <Button id='btn-in'
+                                // type="submit"
+                                type='button'
+                                onClick={() => validateForm()}
+                            >
+                                Accept
+                            </Button>
+                        </Modal.Footer>
+                    </Form>
+                </Modal>
+            </div > : undefined
             }
 
 
