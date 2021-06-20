@@ -120,7 +120,7 @@ const Publication = (props: any) => {
 
         <Link to={id}>
             <div className='textIm'>
-                <a href={props.pub.userId === me ? '/profile' : `/user/${props.pub.userId}`} onClick={(e) => e.stopPropagation()} style={{
+                <a href={props.pub.userId === parseInt(me) ? '/profile' : `/user/${props.pub.userId}`} onClick={(e) => e.stopPropagation()} style={{
                     color: 'white',
                     textDecoration: 'none'
                 }} className=' text-center'>

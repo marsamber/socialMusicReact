@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { Col, Row, InputGroup, FormControl, Modal, Button, Form } from 'react-bootstrap';
+import { Col, Row, InputGroup, FormControl, Modal, Button, Form, ButtonGroup } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faHeart, faComments, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import { faHeart, faComments, faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import auth from './auth';
 import defaultImage from './default.png';
 import Error from './Error';
@@ -19,13 +19,15 @@ const Publication = () => {
     const [audioSrc, setAudioSrc] = useState('');
     const [videoSrc, setvideoSrc] = useState('');
     const [imgSrc, setImgSrc] = useState('');
-    const [user, setUser] = useState('');
+    const [owner, setOwner] = useState('');
+    const [me, setMe] = useState('');
     const [amIOwner, setAmIOwner] = useState(false);
     const [showEdit, setShowEdit] = useState(false);
     const [profile, setProfile] = useState('/profile');
     const [tags, setTags] = useState<string>('');
     const [newTags, setNewTags] = useState<string>('');
-    const [oldData, setOldData] = useState<any>()
+    const [oldData, setOldData] = useState<any>();
+    const [newComment, setNewComment] = useState('');
 
     const handleCloseEdit = () => setShowEdit(false);
     const handleShowEdit = () => setShowEdit(true);
@@ -49,7 +51,7 @@ const Publication = () => {
         }
     }
 
-    const loadUser = (publication: any) => {
+    const loadOwner = (publication: any) => {
         if (token !== null) {
             fetch(`http://localhost:8081/api/users/${publication.userId}`, {
                 headers: {
@@ -59,7 +61,7 @@ const Publication = () => {
             }).then(async (res) => {
                 if (res.status === 200) {
                     let resp = await res.json();
-                    setUser(resp.username);
+                    setOwner(resp.username);
                 }
             })
         }
@@ -104,6 +106,7 @@ const Publication = () => {
         }
     }
 
+
     const getPublication = () => {
         let publicationId = window.location.pathname.substring(1);
         console.log(`http://localhost:8081/api/publications/${publicationId}`);
@@ -121,6 +124,7 @@ const Publication = () => {
                         setPublication(publication);
                         let userId = localStorage.getItem('userId');
                         if (userId !== null) {
+                            setMe(userId);
                             if (publication.userId === parseInt(userId)) {
                                 setAmIOwner(true);
                                 setProfile('/profile');
@@ -142,7 +146,7 @@ const Publication = () => {
 
                         }
                         loadImage(publication);
-                        loadUser(publication);
+                        loadOwner(publication);
                         loadAudio(publication);
                         loadVideo(publication);
                     })
@@ -154,11 +158,6 @@ const Publication = () => {
         }
     }
 
-    const uploadCover = (e: React.ChangeEvent<HTMLInputElement>): void => {
-        if (e.target.files !== null) {
-            setPublication({ ...publication, image: e.target.files[0] })
-        }
-    }
 
     const validateForm = () => {
         if (token !== null) {
@@ -280,6 +279,28 @@ const Publication = () => {
 
     }
 
+    const createComment = () => {
+        if (token !== null) {
+            let comment = {
+                comment: newComment
+            }
+            fetch(`http://localhost:8081/api/publications/${publication.id}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-token': token
+                },
+                body: JSON.stringify(comment)
+            }).then((res) => {
+                if (res.status === 200) {
+                    window.location.href = `/${publication.id}`;
+                } else {
+                    console.log(res.statusText);
+                }
+            }).catch((err) => { console.log(err) });
+        }
+
+    }
 
 
     useEffect(() => {
@@ -306,7 +327,7 @@ const Publication = () => {
                     </Row>
                     <Row>
                         {audioSrc === '' ? undefined : <audio controls autoPlay loop src={audioSrc} />}
-                        {videoSrc === '' ? undefined : <video controls autoPlay loop src={videoSrc} />}
+                        {videoSrc === '' ? (audioSrc === '' ? <img className='thumb' src={imgSrc} alt='thumbnail' height='auto' width='100%' /> : undefined) : <video controls autoPlay loop src={videoSrc} />}
                         {/* {videoSrc === '' ? undefined : <iframe allowFullScreen src="" />} el src tiene que ser https://www.youtube.com/embed/mm7s6NoRtNg asi, crear check para decidir si es de yt el video y entonces decir como se tiene q hacer */}
                     </Row>
                     <br />
@@ -379,7 +400,7 @@ const Publication = () => {
                 <Col md={{ offset: 1 }}>
                     <Row>
                         <Col>
-                            <a href={profile} style={{ textDecoration: 'none', color: 'black' }}><h2>{user}</h2></a>
+                            <a href={profile} style={{ textDecoration: 'none', color: 'black' }}><h2>{owner}</h2></a>
                             <p>{oldData.description}</p>
                         </Col>
                         <Col>
@@ -390,26 +411,15 @@ const Publication = () => {
                         <Col><h2>
                             Comments
                         </h2>
-                            <div style={{ overflowY: 'scroll', height: '40vh' }}>
-
-                                <div>
-                                    <h3>User 1</h3>
-                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus congue nibh eu molestie maximus. Pellentesque lobortis sem non leo placerat condimentum. Sed pretium nisl et ipsum gravida, sed elementum metus finibus.</p>
+                            {publication.comments.length === 0 ? undefined :
+                                <div style={{ overflowY: 'scroll', height: '40vh' }}>
+                                    {publication.comments.map((item: any, index: any) => <Comment key={index} comment={item} publicationId={publication.id}></Comment>)}
                                 </div>
-                                <div>
-                                    <h3>User 2</h3>
-                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus congue nibh eu molestie maximus. Pellentesque lobortis sem non leo placerat condimentum. Sed pretium nisl et ipsum gravida, sed elementum metus finibus.</p>
-                                </div>
-                                <div>
-                                    <h3>User 3</h3>
-                                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus congue nibh eu molestie maximus. Pellentesque lobortis sem non leo placerat condimentum. Sed pretium nisl et ipsum gravida, sed elementum metus finibus.</p>
-                                </div>
-                            </div>
+                            }
                             <br />
                             <InputGroup>
-                                <FormControl as="textarea" aria-label="With textarea" />
-                                <button className='btn' id='btn-in'>Send comment</button>
-
+                                <FormControl as="textarea" aria-label="With textarea" value={newComment} onChange={(e) => setNewComment(e.target.value)} />
+                                <button className='btn' id='btn-in' onClick={() => createComment()}>Send comment</button>
                             </InputGroup>
                         </Col>
                     </Row>
@@ -419,6 +429,133 @@ const Publication = () => {
 
         </div >
     )
+}
+
+const Comment = (props: any) => {
+
+    const [username, setUsername] = useState('');
+    const [show, setShow] = useState(true);
+    const [showEditComment, setShowEditComment] = useState(false);
+    const [comment, setComment] = useState(props.comment.comment);
+    const [commentEdited, setCommentEdited] = useState(props.comment.comment);
+
+    let token = localStorage.getItem('token');
+    let aux = localStorage.getItem('userId');
+    let me;
+    if (aux !== null) me = parseInt(aux);
+
+    const editComment = () => {
+        if (token !== null) {
+            let newComment = {
+                comment
+            }
+            fetch(`http://localhost:8081/api/publications/comments/${props.comment.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-token': token
+                },
+                body: JSON.stringify(newComment)
+            }).then((res) => {
+                if (res.status === 200) {
+                    setCommentEdited(comment);
+                    setShowEditComment(false);
+                }
+                else {
+                    console.log(res.statusText);
+                }
+            }).catch((err) => { console.log(err) });
+        }
+
+    }
+
+    const deleteComment = () => {
+        if (token !== null) {
+            fetch(`http://localhost:8081/api/publications/comments/${props.comment.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-token': token
+                }
+            }).then((res) => {
+                if (res.status === 200) {
+                    setShow(false);
+                } else {
+                    console.log(res.statusText);
+                }
+            }).catch((err) => { console.log(err) });
+        }
+    }
+
+    const loadUser = () => {
+        if (token !== null) {
+            fetch(`http://localhost:8081/api/users/${props.comment.userId}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-access-token': token
+                }
+            }).then((res) => {
+                if (res.status === 200) {
+                    res.json().then((user) => {
+                        setUsername(user.username);
+                    });
+                } else {
+                    console.log(res.statusText);
+                }
+            }).catch((err) => { console.log(err) });
+        }
+
+    }
+
+    useEffect(() => {
+        loadUser();
+    }, [])
+
+    if (!show) {
+        return <></>;
+    }
+    return (<div>
+        <h3>{username}</h3>
+        <div className="d-flex justify-content-between">
+            <p>{commentEdited}</p>
+            {props.comment.userId === me ? <ButtonGroup size="sm" className='pb-3'>
+                <Button type='button' className='btn' id='btn-out-icon' onClick={() => setShowEditComment(true)}><FontAwesomeIcon icon={faPencilAlt} /></Button><Button type='button' className='btn' id='btn-out-icon' onClick={() => deleteComment()} > <FontAwesomeIcon icon={faTrash} /></Button>
+            </ButtonGroup> : undefined}
+        </div>
+
+        <Modal show={showEditComment} onHide={() => setShowEditComment(false)} size="sm"
+            aria-labelledby="contained-modal-title-vcenter"
+            centered>
+            <Modal.Header closeButton>
+                <Modal.Title>Edit comment</Modal.Title>
+            </Modal.Header>
+            <Form
+            // onSubmit={() => validateForm()}
+            >
+                <Modal.Body>
+                    <Row className='align-items-center'>
+                        <Col>
+                            <InputGroup className="mb-3">
+                                <FormControl as="textarea" aria-label="With textarea" value={comment} onChange={(e) => setComment(e.target.value)} />
+                            </InputGroup>
+                        </Col>
+                    </Row>
+
+                </Modal.Body>
+                <Modal.Footer className='justify-content-center'>
+                    <Button id='btn-in'
+                        // type="submit"
+                        type='button'
+                        onClick={() => editComment()}
+                    >
+                        Accept
+                    </Button>
+                </Modal.Footer>
+            </Form>
+        </Modal>
+    </div>)
+
+
 }
 
 export default Publication

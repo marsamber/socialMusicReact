@@ -9,6 +9,16 @@
   border-color: #12b597;
   color: white;
 }
+#btn-out-icon {
+  color: #12b597;
+  border-color: white;
+  background-color: transparent;
+  margin: 2px;
+}
+#btn-out-icon:hover {
+  background-color: #12b597;
+  color: white;
+}
 #btn-in {
   background-color: #12b597;
   border-color: #12b597;
