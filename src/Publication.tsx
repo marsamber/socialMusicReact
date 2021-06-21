@@ -464,7 +464,7 @@ const Publication = () => {
                             <p>{oldData.description}</p>
                         </Col>
                         <Col>
-                            {tags.length > 0 ? <><span style={{ fontSize: 'large' }}>Tags: </span>{tags.split(",").map((item: string) => { return <>&nbsp;<a key={item.trim()} href={`/search?key=${item.trim()}`} style={{ color: '#0a6151' }}>{item.trim()}</a> &nbsp;</> })}</> : undefined}
+                            {tags.length > 0 ? <><span style={{ fontSize: 'large' }}>Tags: </span>{tags.split(",").map((item: string) => { return <>&nbsp;<a key={item.trim()} href={`/search?tag=${item.trim()}`} style={{ color: '#0a6151' }}>{item.trim()}</a> &nbsp;</> })}</> : undefined}
                         </Col>
                     </Row>
                     <Row>

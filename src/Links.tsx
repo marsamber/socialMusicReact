@@ -41,6 +41,10 @@ const Links = () => {
     const [showErrorsReg, setShowErrorsReg] = useState(false);
     const [errorsReg, setErrorsReg] = useState<string | null>(null);
 
+    const [key, setKey] = useState('');
+
+    let token = localStorage.getItem('token');
+
     const validateForm = () => {
         let login_data = {
             username,
@@ -153,6 +157,16 @@ const Links = () => {
 
     }
 
+    const search = () => {
+        if (token !== null) {
+            if (key === '')
+                window.location.href = '/search';
+            else {
+                window.location.href = `/search?key=${key}`;
+            }
+        }
+    }
+
     useEffect(() => {
         bsCustomFileInput.init();
     }, [])
@@ -186,8 +200,8 @@ const Links = () => {
                         </Nav.Link>
                     </Nav>
                     <Form inline>
-                        <FormControl type="text" placeholder="Search" className='mr-sm-2' />
-                        <Button id='btn-out'>Search</Button>
+                        <FormControl type="text" placeholder="Search" className='mr-sm-2' onChange={(e) => setKey(e.target.value)} />
+                        <Button id='btn-out' onClick={() => search()}>Search</Button>
                     </Form>
                     <Button id='btn-in' onClick={() => auth.logout()}>
                         <FontAwesomeIcon icon={faSignOutAlt} /> Logout

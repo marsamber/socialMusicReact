@@ -10,6 +10,7 @@ import Publication from './Publication'
 import Error from './Error';
 import User from './User';
 import Followed from './Followed';
+import Search from './Search';
 
 const Navbar = () => {
     return (
@@ -33,6 +34,9 @@ const Navbar = () => {
                 </Route>
                 <Route path='/upload'>
                     <Upload />
+                </Route>
+                <Route path='/search'>
+                    <Search />
                 </Route>
                 <Route path='/error'>
                     <Error />

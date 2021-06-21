@@ -7,13 +7,12 @@ import auth from './auth';
 
 const PublicationsList = (props: any) => {
     const [data, setData] = useState<any[]>([]);
-
+    console.log(props);
     const getPublications = async () => {
         let url = 'http://localhost:8081/api/publications';
         if (props.url) {
             url = props.url;
         }
-        console.log(url);
         let token = localStorage.getItem('token');
         if (token !== null) {
             const resp = await fetch(url, {
@@ -38,7 +37,6 @@ const PublicationsList = (props: any) => {
     }, [])
 
     if (data.length > 0) {
-        console.log(data)
         let numRow = data.length / 4;
         numRow = Math.round(numRow) + 1;
         let i = -1;
@@ -54,13 +52,15 @@ const PublicationsList = (props: any) => {
             })}
         </>
 
+    } else if (props.origin === 'search') {
+        return <p>No results found</p>
     } else {
+        console.log(props)
         return <><h1 className='text-center'>We don't have any posts to show you!</h1></>
     }
 }
 
 const Publication = (props: any) => {
-    console.log(props)
     let id = `/${props.pub.id}`;
     const [imgSrc, setImgSrc] = useState('');
     const [username, setUsername] = useState('');
@@ -96,7 +96,6 @@ const Publication = (props: any) => {
                 }
             }).then(async (url) => {
                 let image = await url.json();
-                console.log(image)
                 setImgSrc(`data:${image.image.type};base64,${Buffer.from(image.imageData.data).toString('base64')}`);
             });
         } else if (props.pub.urlImg !== null) {
