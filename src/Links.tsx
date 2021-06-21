@@ -2,9 +2,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faUpload, faSignOutAlt, faSignInAlt } from '@fortawesome/free-solid-svg-icons';
 import { faSpotify } from '@fortawesome/free-brands-svg-icons'
 import { Button, Form, FormControl, Modal, Nav, Navbar, Alert } from 'react-bootstrap';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 // import Login from './Login';
 import auth from './auth';
+import bsCustomFileInput from 'bs-custom-file-input';
 // import { Link } from 'react-router-dom'
 
 const Links = () => {
@@ -31,6 +32,8 @@ const Links = () => {
     const [phoneReg, setPhoneReg] = useState<number | null>(null);
     const [passwordReg, setPasswordReg] = useState<string | null>(null);
     const [check, setCheck] = useState(false);
+    const [imgUrl, setImgUrl] = useState<string | null>(null);
+    const [imgUpl, setImgUpl] = useState<any>();
 
     const [showErrorsLogin, setShowErrorsLogin] = useState(false);
     const [errorsLogin, setErrorsLogin] = useState<string | null>(null);
@@ -71,7 +74,8 @@ const Links = () => {
             lastname: lastnameReg,
             phone: phoneReg,
             password: passwordReg,
-            public: !check
+            public: !check,
+            urlImg: imgUrl
         }
 
         if (usernameReg === null || emailReg === null || firstnameReg === null || passwordReg === null) {
@@ -79,23 +83,58 @@ const Links = () => {
             setErrorsReg('You must fill all the fields marked as required!');
         }
         else {
-            fetch('http://localhost:8081/api/auth/signup', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(reg_data)
-            }).then(async (res) => {
-                if (res.status === 200) {
-                    window.location.href = '/';
-                }
-                else {
-                    let resp = await res.json();
-                    setShowErrorsReg(true);
-                    console.log(res);
-                    setErrorsReg(resp.message);
-                }
-            });
+            if (imgUpl !== undefined) {
+                const formdata = new FormData();
+                formdata.append("file", imgUpl);
+                fetch('http://localhost:8081/api/images', {
+                    method: 'POST',
+                    body: formdata
+                }).then((res) => {
+                    if (res.status === 200) {
+                        res.json().then((image) => {
+                            let imageId = image.id;
+                            fetch(`http://localhost:8081/api/auth/signup/${imageId}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(reg_data)
+                            }).then(async (res) => {
+                                if (res.status === 200) {
+                                    window.location.href = '/';
+                                }
+                                else {
+                                    let resp = await res.json();
+                                    setShowErrorsReg(true);
+                                    console.log(res);
+                                    setErrorsReg(resp.message);
+                                }
+                            }).catch((err) => console.log(err));
+                        })
+                    } else {
+                        console.log(res.statusText);
+                    }
+                })
+            } else {
+                fetch('http://localhost:8081/api/auth/signup/0', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(reg_data)
+                }).then(async (res) => {
+                    if (res.status === 200) {
+                        window.location.href = '/';
+                    }
+                    else {
+                        let resp = await res.json();
+                        setShowErrorsReg(true);
+                        console.log(res);
+                        setErrorsReg(resp.message);
+                    }
+                }).catch((err) => console.log(err));
+            }
+
         }
 
     }
@@ -106,6 +145,17 @@ const Links = () => {
         //     mode: 'no-cors'
         // }).then((res) => console.log(res));
     }
+
+    const uploadFile = (e: React.ChangeEvent<HTMLInputElement>): void => {
+        if (e.target.files !== null) {
+            setImgUpl(e.target.files[0]);
+        }
+
+    }
+
+    useEffect(() => {
+        bsCustomFileInput.init();
+    }, [])
 
     if (auth.isLogged())
         return (
@@ -121,6 +171,9 @@ const Links = () => {
                         </Nav.Link>
                         <Nav.Link className={`${window.location.pathname === '/profile' ? 'active' : null}`} href="/profile">
                             Profile
+                        </Nav.Link>
+                        <Nav.Link className={`${window.location.pathname === '/followed' ? 'active' : null}`} href="/followed">
+                            Followed
                         </Nav.Link>
                         <Nav.Link className={` ${window.location.pathname === '/messages' ? 'active' : null}`} href="/messages">
                             Messages
@@ -138,7 +191,7 @@ const Links = () => {
                     </Form>
                     <Button id='btn-in' onClick={() => auth.logout()}>
                         <FontAwesomeIcon icon={faSignOutAlt} /> Logout
-                </Button>
+                    </Button>
                 </Navbar.Collapse>
             </Navbar>
         )
@@ -187,10 +240,10 @@ const Links = () => {
                                 type='button' onClick={() => validateForm()}
                             >
                                 Sign in
-                    </Button>
+                            </Button>
                             <Button id='btn-in' onClick={handleShowRegister}>
                                 Create Account
-                </Button>
+                            </Button>
                             <a onClick={() => loginSpotify()} className="btn btn-success"> <FontAwesomeIcon icon={faSpotify} /> Log in with Spotify</a>
                         </Modal.Footer>
                     </Form>
@@ -233,9 +286,18 @@ const Links = () => {
                                 <Form.Control type="password" placeholder="Password" onChange={(e) => setPasswordReg(e.target.value)} />
                             </Form.Group>
 
+                            <Form.Group controlId="formBasicImgUrl">
+                                <Form.Control type='text' placeholder='URL profile image' onChange={(e) => setImgUrl(e.target.value)} />
+                            </Form.Group>
+                            <p className="text-center">or</p>
+                            <Form.Group controlId="formBasicImg">
+                                <Form.File custom label='Upload profile image' onChange={uploadFile} />
+                            </Form.Group>
+
                             <Form.Group controlId="formBasicCheckbox">
                                 <Form.Check type="checkbox" label="I want a private profile" onChange={(e) => setCheck(e.target.checked)} />
                             </Form.Group>
+
                             <Form.Text id="passwordHelpBlock" muted>
                                 * You must fill out all required fields before checking
                             </Form.Text>
@@ -251,7 +313,7 @@ const Links = () => {
                                 type='button' onClick={() => validateForm2()}
                             >
                                 Register
-                    </Button>
+                            </Button>
                         </Modal.Footer>
                     </Form>
                 </Modal>

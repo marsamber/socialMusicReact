@@ -49,7 +49,8 @@ const Upload = () => {
                 description: post.description,
                 urlImg: null,
                 urlAudio: null,
-                urlVideo: null
+                urlVideo: null,
+                public: post.public
             }
             console.log(post.isAudio);
             console.log(post.image);
@@ -1227,6 +1228,12 @@ const Upload = () => {
                                 <option value='video'>Video</option>
                             </Form.Control>
                         </Form.Group>
+                        <Form.Check
+                            type="switch"
+                            id="custom-switch"
+                            label="I want a public publication"
+                            onChange={() => setPost({ ...post, public: !post.public })}
+                        />
                     </Col>
                 </Row>
                 <Row className='add-space'>

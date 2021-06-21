@@ -16,6 +16,7 @@ const Publication = () => {
     let token = localStorage.getItem('token');
 
     const [publication, setPublication] = useState<any>();
+    const [votes, setVotes] = useState<number>(0);
     const [audioSrc, setAudioSrc] = useState('');
     const [videoSrc, setvideoSrc] = useState('');
     const [imgSrc, setImgSrc] = useState('');
@@ -28,6 +29,7 @@ const Publication = () => {
     const [newTags, setNewTags] = useState<string>('');
     const [oldData, setOldData] = useState<any>();
     const [newComment, setNewComment] = useState('');
+    const [btnId, setBtnId] = useState('btn-in');
 
     const handleCloseEdit = () => setShowEdit(false);
     const handleShowEdit = () => setShowEdit(true);
@@ -109,7 +111,6 @@ const Publication = () => {
 
     const getPublication = () => {
         let publicationId = window.location.pathname.substring(1);
-        console.log(`http://localhost:8081/api/publications/${publicationId}`);
         let token = localStorage.getItem('token');
         if (token !== null) {
             fetch(`http://localhost:8081/api/publications/${publicationId}`, {
@@ -121,6 +122,7 @@ const Publication = () => {
                 if (res.status === 200) {
                     res.json().then((publication) => {
                         setOldData({ title: publication.title, singer: publication.singer, description: publication.description });
+                        setVotes(publication.votes.length);
                         setPublication(publication);
                         let userId = localStorage.getItem('userId');
                         if (userId !== null) {
@@ -130,6 +132,12 @@ const Publication = () => {
                                 setProfile('/profile');
                             } else {
                                 setProfile(`/user/${publication.userId}`);
+                            }
+
+                            for (let i = 0; i < publication.votes.length; i++) {
+                                if (publication.votes[i].userId === parseInt(userId)) {
+                                    setBtnId('btn-out');
+                                }
                             }
                         }
                         if (publication.tags.length > 0) {
@@ -145,6 +153,7 @@ const Publication = () => {
                             setNewTags(listTags);
 
                         }
+
                         loadImage(publication);
                         loadOwner(publication);
                         loadAudio(publication);
@@ -165,6 +174,7 @@ const Publication = () => {
                 title: publication.title,
                 singer: publication.singer,
                 description: publication.description,
+                public: publication.public
             }
 
             const myHeaders = new Headers();
@@ -302,6 +312,43 @@ const Publication = () => {
 
     }
 
+    const votePublication = () => {
+        let me = localStorage.getItem('userId');
+        if (token !== null && me !== null) {
+            if (btnId === 'btn-in') {
+                fetch(`http://localhost:8081/api/publications/${publication.id}/votes`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-access-token': token
+                    }
+                }).then((res) => {
+                    if (res.status === 200) {
+                        setVotes(votes + 1);
+                        setBtnId('btn-out');
+                    } else {
+                        console.log(res.statusText);
+                    }
+                }).catch((err) => console.log(err));
+            } else {
+                fetch(`http://localhost:8081/api/publications/${publication.id}/votes`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-access-token': token
+                    }
+                }).then((res) => {
+                    if (res.status === 200) {
+                        setVotes(votes - 1);
+                        setBtnId('btn-in');
+                    } else {
+                        console.log(res.statusText);
+                    }
+                }).catch((err) => console.log(err));
+            }
+        }
+    }
+
 
     useEffect(() => {
         getPublication();
@@ -333,7 +380,7 @@ const Publication = () => {
                     <br />
                     <Row>
                         <Col className='text-center' style={{ paddingLeft: 0, paddingRight: 0 }}>
-                            <button className='btn btn-pub' id='btn-in'><FontAwesomeIcon icon={faHeart}></FontAwesomeIcon></button>
+                            <button className='btn btn-pub' id={btnId} onClick={() => votePublication()}><FontAwesomeIcon icon={faHeart}></FontAwesomeIcon> {votes}</button>
                             {amIOwner ? <button className='btn btn-pub' id='btn-in' onClick={handleShowEdit}><FontAwesomeIcon icon={faPencilAlt}></FontAwesomeIcon></button>
                                 : undefined}
                             <Modal show={showEdit} onHide={handleCloseEdit} size="lg"
@@ -374,6 +421,19 @@ const Publication = () => {
                                                     <InputGroup.Text>Tags</InputGroup.Text>
                                                     <FormControl as="textarea" aria-label="With textarea" value={newTags.toString()} onChange={(e) => setNewTags(e.target.value)} />
                                                 </InputGroup>
+                                                {publication.public ? <Form.Check
+                                                    type="switch"
+                                                    id="custom-switch"
+                                                    label="I want a public publication"
+                                                    checked
+                                                    onChange={() => setPublication({ ...publication, public: false })}
+                                                /> : <Form.Check
+                                                    type="switch"
+                                                    id="custom-switch"
+                                                    label="I want a public publication"
+                                                    onChange={() => setPublication({ ...publication, public: true })}
+                                                />}
+
                                             </Col>
                                             <Col>
                                                 {imgSrc === '' ? undefined : <img className='thumb mb-3' src={imgSrc} alt='thumbnail' height='auto' width='100%' />}
@@ -404,7 +464,7 @@ const Publication = () => {
                             <p>{oldData.description}</p>
                         </Col>
                         <Col>
-                            {tags.length > 0 ? <><span style={{ fontSize: 'large' }}>Tags: </span>{tags.split(",").map((item: string) => { return <a key={item.trim()} href={`/search?key=${item.trim()}`} style={{ color: '#0a6151' }}> {item.trim()} </a> })}</> : undefined}
+                            {tags.length > 0 ? <><span style={{ fontSize: 'large' }}>Tags: </span>{tags.split(",").map((item: string) => { return <>&nbsp;<a key={item.trim()} href={`/search?key=${item.trim()}`} style={{ color: '#0a6151' }}>{item.trim()}</a> &nbsp;</> })}</> : undefined}
                         </Col>
                     </Row>
                     <Row>
@@ -434,6 +494,7 @@ const Publication = () => {
 const Comment = (props: any) => {
 
     const [username, setUsername] = useState('');
+    const [userId, setUserId] = useState('');
     const [show, setShow] = useState(true);
     const [showEditComment, setShowEditComment] = useState(false);
     const [comment, setComment] = useState(props.comment.comment);
@@ -498,6 +559,7 @@ const Comment = (props: any) => {
                 if (res.status === 200) {
                     res.json().then((user) => {
                         setUsername(user.username);
+                        setUserId(user.id);
                     });
                 } else {
                     console.log(res.statusText);
@@ -515,7 +577,7 @@ const Comment = (props: any) => {
         return <></>;
     }
     return (<div>
-        <h3>{username}</h3>
+        <a href={`/user/${userId}`} style={{ textDecoration: 'none', color: 'black' }}><h3>{username}</h3></a>
         <div className="d-flex justify-content-between">
             <p>{commentEdited}</p>
             {props.comment.userId === me ? <ButtonGroup size="sm" className='pb-3'>

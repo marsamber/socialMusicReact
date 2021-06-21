@@ -9,6 +9,7 @@ import Upload from './Upload';
 import Publication from './Publication'
 import Error from './Error';
 import User from './User';
+import Followed from './Followed';
 
 const Navbar = () => {
     return (
@@ -20,6 +21,9 @@ const Navbar = () => {
                 </Route>
                 <Route path='/profile'>
                     <Profile />
+                </Route>
+                <Route path='/followed'>
+                    <Followed />
                 </Route>
                 <Route path='/messages'>
                     <Messages />

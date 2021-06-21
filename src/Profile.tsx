@@ -4,6 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCog, faCheck, faTimes, faTrash, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import auth from './auth';
 import PublicationsList from './PublicationsList';
+import defaultImageProfile from './defaultProfile.png';
+import bsCustomFileInput from 'bs-custom-file-input';
 
 const Profile = () => {
     if (!auth.isLogged()) {
@@ -22,6 +24,7 @@ const Profile = () => {
     const [showConfig, setShowConfig] = useState(false);
     const [showEdit, setShowEdit] = useState(false);
     const [user, setUser] = useState<any>();
+    const [imgProfileSrc, setImgProfileSrc] = useState('');
 
     const getUser = () => {
         let aux = localStorage.getItem('userId');
@@ -45,11 +48,31 @@ const Profile = () => {
                         setBiography(resp.biography === null ? '' : resp.biography);
                         setUserPublic(resp.public);
                         setUser(resp);
+                        loadImgProfile(resp);
                     });
                 } else {
                     console.log(res.statusText);
                 }
             })
+        }
+    }
+
+    const loadImgProfile = (user: any) => {
+        if (user.image !== null) {
+            fetch(`http://localhost:8081/api/images/${user.image.id}`, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(async (url) => {
+                let image = await url.json();
+                console.log(image)
+                setImgProfileSrc(`data:${image.image.type};base64,${Buffer.from(image.imageData.data).toString('base64')}`);
+            });
+        } else if (user.urlImg !== null) {
+            setImgProfileSrc(user.urlImg);
+
+        } else {
+            setImgProfileSrc(defaultImageProfile);
         }
     }
 
@@ -60,7 +83,7 @@ const Profile = () => {
 
     const changePublic = () => {
         if (token !== null) {
-            fetch('http://localhost:8081/api/users', {
+            fetch('http://localhost:8081/api/users/images/0', {
                 method: 'PUT',
                 body: JSON.stringify({ public: !userPublic }),
                 headers: {
@@ -86,26 +109,57 @@ const Profile = () => {
                 firstname: user.firstname,
                 lastname: user.lastname,
                 phone: user.phone,
-                biography: user.biography
+                biography: user.biography,
+                urlImg: user.urlImg
             }
             const myHeaders = new Headers();
             myHeaders.append("x-access-token", token);
             myHeaders.append("Content-Type", "application/json");
-            fetch("http://localhost:8081/api/users", {
-                method: 'PUT',
-                headers: myHeaders,
-                body: JSON.stringify(newUser)
-            }).then((res) => {
-                if (res.status === 200) {
-                    window.location.href = '/profile';
-                } else {
-                    console.log(res.statusText);
-                }
-            }).catch((err) => {
-                console.log(err);
-            });
+            if (user.uplImg !== undefined) {
+                const formdata = new FormData();
+                formdata.append("file", user.uplImg);
+                fetch('http://localhost:8081/api/images', {
+                    method: 'POST',
+                    body: formdata
+                }).then((res) => {
+                    if (res.status === 200) {
+                        res.json().then((image) => {
+                            let imageId = image.id;
+                            fetch(`http://localhost:8081/api/users/images/${imageId}`, {
+                                method: 'PUT',
+                                headers: myHeaders,
+                                body: JSON.stringify(newUser)
+                            }).then((res) => {
+                                if (res.status === 200) {
+                                    window.location.href = '/profile';
+                                } else {
+                                    console.log(res.statusText);
+                                }
+                            }).catch((err) => {
+                                console.log(err);
+                            });
+                        })
+                    }
+                }).catch((err) => console.log(err));
+            } else {
+                fetch('http://localhost:8081/api/users/images/0', {
+                    method: 'PUT',
+                    headers: myHeaders,
+                    body: JSON.stringify(newUser)
+                }).then((res) => {
+                    if (res.status === 200) {
+                        window.location.href = '/profile';
+                    } else {
+                        console.log(res.statusText);
+                    }
+                }).catch((err) => {
+                    console.log(err);
+                });
+            }
         }
+
     }
+
 
     const deleteAccount = () => {
         if (token !== null) {
@@ -128,15 +182,23 @@ const Profile = () => {
 
     }
 
+    const uploadFile = (e: React.ChangeEvent<HTMLInputElement>): void => {
+        if (e.target.files !== null) {
+            setUser({ ...user, uplImg: e.target.files[0] });
+        }
+
+    }
+
     useEffect(() => {
         getUser();
+        bsCustomFileInput.init();
     }, [userId])
 
     return (
         <div className='container'>
             <Row>
                 <Col md={{ span: 6 }}>
-                    <img className='float-right' src="https://blog.cpanel.com/wp-content/uploads/2019/08/user-01.png" alt="user" width='30%' height='auto' />
+                    <img className='float-right' src={imgProfileSrc} alt="user" width='30%' height='auto' />
                 </Col>
                 <Col md={{ span: 4 }} >
                     <div className='float-right'>
@@ -151,7 +213,7 @@ const Profile = () => {
             </Row>
             <br />
             <br />
-            {showPublications ? <Row><PublicationsList url={`http://localhost:8081/api/publications/users/${userId}`} /></Row> : undefined}
+            {showPublications ? <PublicationsList url={`http://localhost:8081/api/publications/users/${userId}`} /> : undefined}
             {showConfig ? <div>
                 <Row>
                     <Col className='text-center'><h4 >Public Profile <button className='btn' onClick={() => changePublic()}>{userPublic ? <FontAwesomeIcon icon={faCheck}></FontAwesomeIcon> : <FontAwesomeIcon icon={faTimes}></FontAwesomeIcon>}</button></h4></Col>
@@ -163,7 +225,7 @@ const Profile = () => {
                     <Col className='text-center'><h4>Delete Account <button className='btn' onClick={() => deleteAccount()}><FontAwesomeIcon icon={faTrash}></FontAwesomeIcon></button></h4></Col>
                 </Row>
 
-                <Modal show={showEdit} onHide={() => setShowEdit(false)} size="sm"
+                <Modal show={showEdit} onHide={() => setShowEdit(false)} size="lg"
                     aria-labelledby="contained-modal-title-vcenter"
                     centered>
                     <Modal.Header closeButton>
@@ -173,38 +235,53 @@ const Profile = () => {
                     // onSubmit={() => validateForm()}
                     >
                         <Modal.Body>
-                            <InputGroup className="mb-3">
-                                <InputGroup.Text id="basic-addon1">Firstname</InputGroup.Text>
-                                <FormControl
-                                    value={user.firstname}
-                                    aria-label="Firstname"
-                                    aria-describedby="basic-addon1"
-                                    onChange={(e) => setUser({ ...user, firstname: e.target.value })}
-                                />
-                            </InputGroup>
-                            <InputGroup className="mb-3">
-                                <InputGroup.Text id="basic-addon1">Lastname</InputGroup.Text>
-                                <FormControl
-                                    value={user.lastname}
-                                    aria-label="lastname"
-                                    aria-describedby="basic-addon1"
-                                    onChange={(e) => setUser({ ...user, lastname: e.target.value })}
-                                />
-                            </InputGroup>
-                            <InputGroup className="mb-3">
-                                <InputGroup.Text id="basic-addon1">Phone</InputGroup.Text>
-                                <FormControl
-                                    value={user.phone}
-                                    aria-label="phone"
-                                    aria-describedby="basic-addon1"
-                                    onChange={(e) => setUser({ ...user, phone: e.target.value })}
-                                />
-                            </InputGroup>
-                            <InputGroup className="mb-3">
-                                <InputGroup.Text>Biography</InputGroup.Text>
-                                <FormControl as="textarea" aria-label="With textarea" value={user.biography} onChange={(e) => setUser({ ...user, biography: e.target.value })} />
-                            </InputGroup>
+                            <Row className='align-items-center'>
+                                <Col>
+                                    {imgProfileSrc === '' ? undefined : <img className='thumb mb-3' src={imgProfileSrc} alt='thumbnail' height='auto' width='100%' />}
 
+                                </Col>
+                                <Col>
+                                    <InputGroup className="mb-3">
+                                        <InputGroup.Text id="basic-addon1">Firstname</InputGroup.Text>
+                                        <FormControl
+                                            value={user.firstname}
+                                            aria-label="Firstname"
+                                            aria-describedby="basic-addon1"
+                                            onChange={(e) => setUser({ ...user, firstname: e.target.value })}
+                                        />
+                                    </InputGroup>
+                                    <InputGroup className="mb-3">
+                                        <InputGroup.Text id="basic-addon1">Lastname</InputGroup.Text>
+                                        <FormControl
+                                            value={user.lastname}
+                                            aria-label="lastname"
+                                            aria-describedby="basic-addon1"
+                                            onChange={(e) => setUser({ ...user, lastname: e.target.value })}
+                                        />
+                                    </InputGroup>
+                                    <InputGroup className="mb-3">
+                                        <InputGroup.Text id="basic-addon1">Phone</InputGroup.Text>
+                                        <FormControl
+                                            value={user.phone}
+                                            aria-label="phone"
+                                            aria-describedby="basic-addon1"
+                                            onChange={(e) => setUser({ ...user, phone: e.target.value })}
+                                        />
+                                    </InputGroup>
+                                    <InputGroup className="mb-3">
+                                        <InputGroup.Text>Biography</InputGroup.Text>
+                                        <FormControl as="textarea" aria-label="With textarea" value={user.biography} onChange={(e) => setUser({ ...user, biography: e.target.value })} />
+                                    </InputGroup>
+
+                                    <Form.Group controlId="formBasicImgUrl">
+                                        <Form.Control type='text' placeholder='URL profile image' onChange={(e) => setUser({ ...user, urlImg: e.target.value })} />
+                                    </Form.Group>
+                                    <p className="text-center">or</p>
+                                    <Form.Group controlId="formBasicImg">
+                                        <Form.File custom label='Upload profile image' onChange={uploadFile} />
+                                    </Form.Group>
+                                </Col>
+                            </Row>
                         </Modal.Body>
                         <Modal.Footer className='justify-content-center'>
                             <Button id='btn-in'
